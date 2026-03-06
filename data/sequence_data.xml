@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- ==========================================
+         Sequences for auto-generated references
+         ========================================== -->
+    
+    <!-- Dataset Sequence -->
+    <record id="seq_dataset" model="ir.sequence">
+        <field name="name">OptimaAI Dataset</field>
+        <field name="code">optimaai.dataset</field>
+        <field name="prefix">DS-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+    <!-- Prediction Sequence -->
+    <record id="seq_prediction" model="ir.sequence">
+        <field name="name">OptimaAI Prediction</field>
+        <field name="code">optimaai.prediction</field>
+        <field name="prefix">PR-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+    <!-- Insight Sequence -->
+    <record id="seq_insight" model="ir.sequence">
+        <field name="name">OptimaAI Insight</field>
+        <field name="code">optimaai.insight</field>
+        <field name="prefix">INS-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+    <!-- Report Sequence -->
+    <record id="seq_report" model="ir.sequence">
+        <field name="name">OptimaAI Report</field>
+        <field name="code">optimaai.report</field>
+        <field name="prefix">RPT-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+    <!-- Canvas Sequence -->
+    <record id="seq_canvas" model="ir.sequence">
+        <field name="name">OptimaAI Canvas</field>
+        <field name="code">optimaai.canvas</field>
+        <field name="prefix">CV-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+    <!-- KPI Sequence -->
+    <record id="seq_kpi" model="ir.sequence">
+        <field name="name">OptimaAI KPI</field>
+        <field name="code">optimaai.kpi</field>
+        <field name="prefix">KPI-</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+    <!-- Access Request Sequence -->
+    <record id="seq_access_request" model="ir.sequence">
+        <field name="name">OptimaAI Access Request</field>
+        <field name="code">optimaai.access.request</field>
+        <field name="prefix">AR-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+    <!-- Notification Sequence -->
+    <record id="seq_notification" model="ir.sequence">
+        <field name="name">OptimaAI Notification</field>
+        <field name="code">optimaai.notification</field>
+        <field name="prefix">NOT-</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    
+</odoo>

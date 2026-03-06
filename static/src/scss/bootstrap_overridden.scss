@@ -1,0 +1,51 @@
+// ============================================
+// OptimaAI — Bootstrap Variable Overrides
+// ============================================
+// These override Bootstrap's default variables.
+// Loaded via web._assets_frontend_helpers (AFTER primary vars, BEFORE Bootstrap compilation).
+// See: https://github.com/odoo/odoo/blob/saas-19.1/addons/web/static/lib/bootstrap/scss/_variables.scss
+
+// ---- Typography ----
+$font-family-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+// Heading sizes
+$h1-font-size: 2.5rem; // 40px
+$h2-font-size: 2rem; // 32px
+$h3-font-size: 1.75rem; // 28px
+$h4-font-size: 1.5rem; // 24px
+$h5-font-size: 1.25rem; // 20px
+$h6-font-size: 1rem; // 16px
+
+$display1-size: 4.5rem; // 72px — hero titles
+$headings-font-weight: 700;
+
+// ---- Inputs ----
+$input-border-radius: 8px;
+$input-border-color: #CED4DA;
+$input-border-width: 1px;
+$input-focus-border-color: #007BFF;
+$input-focus-box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+
+// ---- Buttons ----
+$btn-border-radius: 8px;
+$btn-border-radius-lg: 12px;
+$btn-border-radius-sm: 6px;
+$btn-font-weight: 600;
+$btn-padding-y: 0.5rem;
+$btn-padding-x: 1.25rem;
+
+// ---- Cards ----
+$card-border-radius: 12px;
+$card-border-color: rgba(0, 0, 0, 0.06);
+$card-cap-bg: transparent;
+
+// ---- Spacing ----
+$spacer: 1rem;
+
+// ---- Shadows ----
+$box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+$box-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+// ---- Transitions ----
+$transition-base: all 0.2s ease-in-out;

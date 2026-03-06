@@ -1,0 +1,28 @@
+// ============================================
+// OptimaAI — Custom Font Declarations
+// ============================================
+// Loaded via web.assets_frontend to make fonts available on the website.
+// Uses Google Fonts for simplicity. For production, consider hosting fonts locally
+// by placing .woff2 files in static/fonts/ and using @font-face.
+
+// ---- Google Fonts Import ----
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+// ---- Font-face declarations (if using local fonts) ----
+// Uncomment and adjust if you want to self-host fonts:
+//
+// @font-face {
+//     font-family: 'CustomFont';
+//     src: url('/optimaai/static/fonts/custom-font-regular.woff2') format('woff2');
+//     font-weight: 400;
+//     font-style: normal;
+//     font-display: swap;
+// }
+//
+// @font-face {
+//     font-family: 'CustomFont';
+//     src: url('/optimaai/static/fonts/custom-font-bold.woff2') format('woff2');
+//     font-weight: 700;
+//     font-style: normal;
+//     font-display: swap;
+// }

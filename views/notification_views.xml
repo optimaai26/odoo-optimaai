@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==========================================
+         Notification Views
+         ========================================== -->
+    
+    <!-- Notification Tree View -->
+    <record id="view_notification_tree" model="ir.ui.view">
+        <field name="name">optimaai.notification.tree</field>
+        <field name="model">optimaai.notification</field>
+        <field name="arch" type="xml">
+            <tree string="Notifications" decoration-warning="priority=='high'" 
+                  decoration-danger="priority=='critical'"
+                  decoration-muted="is_read==True">
+                <field name="name"/>
+                <field name="notification_type"/>
+                <field name="priority" widget="badge"
+                       decoration-info="priority=='low'"
+                       decoration-warning="priority=='high'"
+                       decoration-danger="priority=='critical'"/>
+                <field name="is_read"/>
+                <field name="create_date"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Notification Form View -->
+    <record id="view_notification_form" model="ir.ui.view">
+        <field name="name">optimaai.notification.form</field>
+        <field name="model">optimaai.notification</field>
+        <field name="arch" type="xml">
+            <form string="Notification">
+                <header>
+                    <button name="action_mark_read" type="object" string="Mark as Read" 
+                            attrs="{'invisible': [('is_read', '=', True)]}"/>
+                    <button name="action_mark_unread" type="object" string="Mark as Unread" 
+                            attrs="{'invisible': [('is_read', '=', False)]}"/>
+                    <button name="action_dismiss" type="object" string="Dismiss"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Notification Title"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="notification_type"/>
+                            <field name="priority"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group>
+                            <field name="is_read"/>
+                            <field name="read_date"/>
+                            <field name="is_dismissed"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Message">
+                        <field name="message" nolabel="1" widget="html"/>
+                    </group>
+                    
+                    <group string="Related Record">
+                        <field name="res_model"/>
+                        <field name="res_id"/>
+                        <field name="related_record_url"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Data" name="data">
+                            <group>
+                                <field name="data" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Action" name="action">
+                            <group>
+                                <field name="action_type"/>
+                                <field name="action_config" widget="text"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Notification Search View -->
+    <record id="view_notification_search" model="ir.ui.view">
+        <field name="name">optimaai.notification.search</field>
+        <field name="model">optimaai.notification</field>
+        <field name="arch" type="xml">
+            <search string="Search Notifications">
+                <field name="name"/>
+                <field name="user_id"/>
+                <filter name="unread" string="Unread" domain="[('is_read', '=', False)]"/>
+                <filter name="read" string="Read" domain="[('is_read', '=', True)]"/>
+                <separator/>
+                <filter name="high_priority" string="High Priority" domain="[('priority', 'in', ['high', 'critical'])]"/>
+                <filter name="info" string="Info" domain="[('notification_type', '=', 'info')]"/>
+                <filter name="warning" string="Warning" domain="[('notification_type', '=', 'warning')]"/>
+                <filter name="success" string="Success" domain="[('notification_type', '=', 'success')]"/>
+                <filter name="error" string="Error" domain="[('notification_type', '=', 'error')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Type" name="group_type" context="{'group_by': 'notification_type'}"/>
+                    <filter string="Priority" name="group_priority" context="{'group_by': 'priority'}"/>
+                    <filter string="User" name="group_user" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Notification Action (My Notifications) -->
+    <record id="action_notification_my" model="ir.actions.act_window">
+        <field name="name">My Notifications</field>
+        <field name="res_model">optimaai.notification</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="context">{'search_default_unread': 1}</field>
+        <field name="search_view_id" ref="view_notification_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No notifications
+            </p>
+            <p>
+                You're all caught up! New notifications will appear here.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Notification Action (All - for managers) -->
+    <record id="action_notification_all" model="ir.actions.act_window">
+        <field name="name">All Notifications</field>
+        <field name="res_model">optimaai.notification</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_notification_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No notifications
+            </p>
+            <p>
+                System notifications will appear here.
+            </p>
+        </field>
+    </record>
+    
+</odoo>

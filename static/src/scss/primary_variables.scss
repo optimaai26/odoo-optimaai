@@ -1,0 +1,38 @@
+// ============================================
+// OptimaAI — Odoo Primary Variables Override
+// ============================================
+// These override Odoo's default SCSS variables.
+// Loaded BEFORE Bootstrap via web._assets_primary_variables.
+// See: https://github.com/odoo/odoo/blob/saas-19.1/addons/website/static/src/scss/primary_variables.scss
+
+// ---- Color Palette ----
+// Defines the 5 main brand colors used across the theme.
+$o-color-palettes: map-merge($o-color-palettes, ('optimaai': ('o-color-1': #0A2540, // Deep navy (headings, dark backgrounds)
+                'o-color-2': #007BFF, // Primary blue (CTAs, links, active states)
+                'o-color-3': #00C9A7, // Teal accent (success, highlights)
+                'o-color-4': #F8F9FA, // Off-white (light backgrounds)
+                'o-color-5': #FF6B6B, // Coral accent (alerts, warnings)
+            ),
+        ));
+
+// Set this palette as the active one
+$o-color-palette-name: 'optimaai';
+
+// ---- Fonts ----
+// Heading font: Inter (modern, clean, highly readable)
+$o-theme-font: 'Inter';
+$o-theme-headings-font: 'Inter';
+
+// Use Google Fonts
+$o-google-font: 'Inter';
+$o-google-headings-font: 'Inter';
+
+// ---- Header & Footer ----
+// Use default templates initially (can be customized later)
+$o-website-values-palettes: (
+    ('header-template': 'default',
+        'footer-template': 'default',
+        'font': 'Inter',
+        'headings-font': 'Inter',
+    ),
+);

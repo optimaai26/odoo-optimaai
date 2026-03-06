@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==========================================
+         Prediction Views
+         ========================================== -->
+    
+    <!-- Prediction Tree View -->
+    <record id="view_prediction_tree" model="ir.ui.view">
+        <field name="name">optimaai.prediction.tree</field>
+        <field name="model">optimaai.prediction</field>
+        <field name="arch" type="xml">
+            <tree string="Predictions" decoration-warning="status=='pending'" 
+                  decoration-info="status=='processing'" decoration-success="status=='completed'"
+                  decoration-danger="status=='failed'">
+                <field name="name"/>
+                <field name="dataset_id"/>
+                <field name="prediction_type"/>
+                <field name="status" widget="badge"/>
+                <field name="result_confidence" widget="percentage"/>
+                <field name="completed_date"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Prediction Form View -->
+    <record id="view_prediction_form" model="ir.ui.view">
+        <field name="name">optimaai.prediction.form</field>
+        <field name="model">optimaai.prediction</field>
+        <field name="arch" type="xml">
+            <form string="Prediction">
+                <header>
+                    <button name="action_run_prediction" type="object" string="Run Prediction" 
+                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'pending')]}"/>
+                    <button name="action_cancel" type="object" string="Cancel" 
+                            attrs="{'invisible': [('status', 'not in', ['pending', 'processing'])]}"/>
+                    <button name="action_reset" type="object" string="Reset" 
+                            attrs="{'invisible': [('status', '!=', 'failed')]}"/>
+                    <field name="status" widget="statusbar" 
+                           statusbar_visible="pending,processing,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Prediction Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="dataset_id" context="{'default_status': 'validated'}"/>
+                            <field name="prediction_type"/>
+                            <field name="model_config" widget="text"/>
+                        </group>
+                        <group>
+                            <field name="status"/>
+                            <field name="result_confidence" widget="percentage"/>
+                            <field name="scheduled_date"/>
+                            <field name="completed_date"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <!-- Parameters Tab -->
+                        <page string="Parameters" name="parameters">
+                            <group>
+                                <field name="target_column"/>
+                                <field name="feature_columns" widget="many2many_tags"/>
+                                <field name="model_config" widget="text"/>
+                            </group>
+                        </page>
+                        
+                        <!-- Results Tab -->
+                        <page string="Results" name="results">
+                            <group>
+                                <field name="result_data" widget="text"/>
+                            </group>
+                            <group attrs="{'invisible': [('status', '!=', 'completed')]}">
+                                <div class="alert alert-success" role="alert">
+                                    <strong>Prediction Completed!</strong>
+                                    Confidence: <field name="result_confidence"/>%
+                                </div>
+                            </group>
+                        </page>
+                        
+                        <!-- Error Tab -->
+                        <page string="Error Details" name="error" 
+                              attrs="{'invisible': [('status', '!=', 'failed')]}">
+                            <group>
+                                <field name="error_message"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Prediction Search View -->
+    <record id="view_prediction_search" model="ir.ui.view">
+        <field name="name">optimaai.prediction.search</field>
+        <field name="model">optimaai.prediction</field>
+        <field name="arch" type="xml">
+            <search string="Search Predictions">
+                <field name="name"/>
+                <field name="dataset_id"/>
+                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
+                <filter name="processing" string="Processing" domain="[('status', '=', 'processing')]"/>
+                <filter name="completed" string="Completed" domain="[('status', '=', 'completed')]"/>
+                <filter name="failed" string="Failed" domain="[('status', '=', 'failed')]"/>
+                <separator/>
+                <filter name="classification" string="Classification" domain="[('prediction_type', '=', 'classification')]"/>
+                <filter name="regression" string="Regression" domain="[('prediction_type', '=', 'regression')]"/>
+                <filter name="forecast" string="Forecast" domain="[('prediction_type', '=', 'forecast')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Type" name="group_type" context="{'group_by': 'prediction_type'}"/>
+                    <filter string="Dataset" name="group_dataset" context="{'group_by': 'dataset_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Prediction Kanban View -->
+    <record id="view_prediction_kanban" model="ir.ui.view">
+        <field name="name">optimaai.prediction.kanban</field>
+        <field name="model">optimaai.prediction</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status" class="o_kanban_small_column">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="status"/>
+                <field name="prediction_type"/>
+                <field name="dataset_id"/>
+                <field name="result_confidence"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <strong><field name="name"/></strong>
+                                <div class="text-muted">
+                                    <i class="fa fa-database"/> <field name="dataset_id"/>
+                                </div>
+                                <div>
+                                    <span class="label label-default"><field name="prediction_type"/></span>
+                                </div>
+                                <div t-if="record.result_confidence.value">
+                                    <i class="fa fa-check-circle text-success"/>
+                                    <field name="result_confidence"/>% confidence
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Prediction Action -->
+    <record id="action_prediction" model="ir.actions.act_window">
+        <field name="name">Predictions</field>
+        <field name="res_model">optimaai.prediction</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="search_view_id" ref="view_prediction_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No predictions found
+            </p>
+            <p>
+                Create a prediction to analyze your datasets with AI.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Prediction Action by Dataset -->
+    <record id="action_prediction_by_dataset" model="ir.actions.act_window">
+        <field name="name">Predictions</field>
+        <field name="res_model">optimaai.prediction</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('dataset_id', '=', active_id)]</field>
+        <field name="context">{'default_dataset_id': active_id}</field>
+    </record>
+    
+</odoo>

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ==========================================
+         OptimaAI Public Dashboard Page
+         ==========================================
+         A QWeb page served at /optimaai/public-dashboard
+         using website.layout for header/footer.
+    -->
+
+    <record id="page_public_dashboard" model="ir.ui.view">
+        <field name="name">OptimaAI Public Dashboard</field>
+        <field name="type">qweb</field>
+        <field name="key">optimaai.page_public_dashboard</field>
+        <field name="arch" type="xml">
+            <t t-name="optimaai.page_public_dashboard">
+                <t t-call="website.layout">
+                    <!-- SEO Title -->
+                    <t t-set="additional_title">Dashboard | OptimaAI</t>
+
+                    <div id="wrap" class="oe_structure">
+
+                        <!-- Hero Section -->
+                        <section class="s_optimaai_hero">
+                            <div class="container">
+                                <div class="row align-items-center">
+                                    <div class="col-lg-7">
+                                        <h1 class="hero-title o_animate_fade_in_up">
+                                            AI-Powered Business Intelligence
+                                        </h1>
+                                        <p class="hero-subtitle o_animate_fade_in_up">
+                                            Transform your raw data into actionable insights
+                                            with OptimaAI's predictive analytics platform.
+                                        </p>
+                                        <div class="hero-cta o_animate_fade_in_up">
+                                            <a href="#dashboard-stats" class="btn btn-primary btn-lg me-2">
+                                                View Dashboard
+                                            </a>
+                                            <a href="/web#action=optimaai.action_dataset"
+                                               class="btn btn-outline-light btn-lg">
+                                                Manage Data
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <!-- Stats Overview Section -->
+                        <section id="dashboard-stats" class="s_optimaai_section bg-light">
+                            <div class="container">
+                                <div class="text-center mb-5">
+                                    <h2 class="section-title">Platform Overview</h2>
+                                    <p class="section-subtitle">
+                                        Your business intelligence at a glance
+                                    </p>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="o_stat_item">
+                                            <div class="stat-value" t-esc="dataset_count"/>
+                                            <div class="stat-label">Datasets</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="o_stat_item">
+                                            <div class="stat-value" t-esc="prediction_count"/>
+                                            <div class="stat-label">Predictions</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="o_stat_item">
+                                            <div class="stat-value" t-esc="insight_count"/>
+                                            <div class="stat-label">Active Insights</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="o_stat_item">
+                                            <div class="stat-value" t-esc="kpi_count"/>
+                                            <div class="stat-label">KPIs Tracked</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <!-- KPIs Section -->
+                        <section class="s_optimaai_section">
+                            <div class="container">
+                                <div class="text-center mb-5">
+                                    <h2 class="section-title">Key Performance Indicators</h2>
+                                    <p class="section-subtitle">
+                                        Real-time metrics from your data
+                                    </p>
+                                </div>
+
+                                <div class="row g-4">
+                                    <t t-foreach="top_kpis" t-as="kpi">
+                                        <div class="col-md-4">
+                                            <div class="o_feature_card">
+                                                <div class="feature-icon">
+                                                    <i class="fa fa-line-chart"/>
+                                                </div>
+                                                <h4 class="feature-title" t-field="kpi.name"/>
+                                                <div class="d-flex align-items-baseline gap-2 mb-2">
+                                                    <span style="font-size: 2rem; font-weight: 800;"
+                                                          t-field="kpi.value"/>
+                                                    <span class="text-muted" t-field="kpi.unit"/>
+                                                </div>
+                                                <div t-if="kpi.trend_direction">
+                                                    <span t-if="kpi.trend_direction == 'up'"
+                                                          class="text-success">
+                                                        <i class="fa fa-arrow-up me-1"/>
+                                                        <t t-esc="'%.1f' % (kpi.trend_percentage or 0)"/>%
+                                                    </span>
+                                                    <span t-if="kpi.trend_direction == 'down'"
+                                                          class="text-danger">
+                                                        <i class="fa fa-arrow-down me-1"/>
+                                                        <t t-esc="'%.1f' % (kpi.trend_percentage or 0)"/>%
+                                                    </span>
+                                                    <span t-if="kpi.trend_direction == 'stable'"
+                                                          class="text-muted">
+                                                        <i class="fa fa-minus me-1"/>Stable
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+
+                                    <t t-if="not top_kpis">
+                                        <div class="col-12 text-center text-muted py-5">
+                                            <i class="fa fa-tachometer fa-3x mb-3 d-block" style="opacity: 0.3;"/>
+                                            <p>No KPIs configured yet. Start tracking your metrics!</p>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <!-- Active Insights Section -->
+                        <section class="s_optimaai_section bg-light">
+                            <div class="container">
+                                <div class="text-center mb-5">
+                                    <h2 class="section-title">Active Insights</h2>
+                                    <p class="section-subtitle">
+                                        AI-generated insights from your data
+                                    </p>
+                                </div>
+
+                                <div class="row g-4">
+                                    <t t-foreach="active_insights" t-as="insight">
+                                        <div class="col-md-6">
+                                            <div class="o_feature_card">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="badge bg-info text-uppercase"
+                                                          t-field="insight.insight_type"/>
+                                                    <span class="badge bg-warning text-dark"
+                                                          t-field="insight.priority"/>
+                                                </div>
+                                                <h5 class="feature-title" t-field="insight.name"/>
+                                                <p class="feature-description"
+                                                   t-field="insight.description"/>
+                                            </div>
+                                        </div>
+                                    </t>
+
+                                    <t t-if="not active_insights">
+                                        <div class="col-12 text-center text-muted py-5">
+                                            <i class="fa fa-lightbulb-o fa-3x mb-3 d-block" style="opacity: 0.3;"/>
+                                            <p>No active insights. Run predictions to generate insights!</p>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <!-- Recent Datasets Section -->
+                        <section class="s_optimaai_section">
+                            <div class="container">
+                                <div class="text-center mb-5">
+                                    <h2 class="section-title">Recent Datasets</h2>
+                                    <p class="section-subtitle">
+                                        Your latest uploaded data
+                                    </p>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Source</th>
+                                                <th>Status</th>
+                                                <th>Rows</th>
+                                                <th>Created</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="recent_datasets" t-as="ds">
+                                                <tr>
+                                                    <td class="fw-bold" t-field="ds.name"/>
+                                                    <td t-field="ds.data_source"/>
+                                                    <td>
+                                                        <span class="badge bg-secondary"
+                                                              t-field="ds.status"/>
+                                                    </td>
+                                                    <td t-field="ds.row_count"/>
+                                                    <td t-field="ds.create_date"
+                                                        t-options='{"widget": "date"}'/>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <t t-if="not recent_datasets">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fa fa-database fa-3x mb-3 d-block" style="opacity: 0.3;"/>
+                                        <p>No datasets yet. Upload your first dataset!</p>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+</odoo>

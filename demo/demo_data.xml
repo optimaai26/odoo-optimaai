@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Demo Datasets -->
+    <record id="demo_dataset_sales" model="optimaai.dataset">
+        <field name="name">Sales Data 2025</field>
+        <field name="data_source">upload</field>
+        <field name="data_format">csv</field>
+        <field name="data_raw">date,product,quantity,revenue,region
+2025-01-01,Product A,100,5000,North
+2025-01-02,Product B,150,7500,South
+2025-01-03,Product A,80,4000,East
+2025-01-04,Product C,200,10000,West
+2025-01-05,Product B,120,6000,North</field>
+        <field name="status">validated</field>
+    </record>
+
+    <record id="demo_dataset_customers" model="optimaai.dataset">
+        <field name="name">Customer Behavior Data</field>
+        <field name="data_source">api</field>
+        <field name="data_format">json</field>
+        <field name="data_raw">[
+            {"customer_id": 1, "age": 25, "spending": 1200, "visits": 15, "segment": "Premium"},
+            {"customer_id": 2, "age": 34, "spending": 800, "visits": 8, "segment": "Standard"},
+            {"customer_id": 3, "age": 45, "spending": 2500, "visits": 25, "segment": "Premium"},
+            {"customer_id": 4, "age": 28, "spending": 450, "visits": 5, "segment": "Basic"},
+            {"customer_id": 5, "age": 52, "spending": 1800, "visits": 18, "segment": "Premium"}
+        ]</field>
+        <field name="status">validated</field>
+    </record>
+
+    <record id="demo_dataset_inventory" model="optimaai.dataset">
+        <field name="name">Inventory Levels</field>
+        <field name="data_source">manual</field>
+        <field name="data_format">json</field>
+        <field name="data_raw">[
+            {"sku": "SKU001", "name": "Widget A", "quantity": 150, "reorder_point": 50, "category": "Electronics"},
+            {"sku": "SKU002", "name": "Widget B", "quantity": 25, "reorder_point": 40, "category": "Electronics"},
+            {"sku": "SKU003", "name": "Gadget X", "quantity": 300, "reorder_point": 100, "category": "Gadgets"},
+            {"sku": "SKU004", "name": "Gadget Y", "quantity": 10, "reorder_point": 30, "category": "Gadgets"},
+            {"sku": "SKU005", "name": "Tool Z", "quantity": 75, "reorder_point": 25, "category": "Tools"}
+        ]</field>
+        <field name="status">validated</field>
+    </record>
+
+    <!-- Demo Predictions -->
+    <record id="demo_prediction_sales_forecast" model="optimaai.prediction">
+        <field name="name">Sales Forecast Q1</field>
+        <field name="dataset_id" ref="demo_dataset_sales"/>
+        <field name="prediction_type">regression</field>
+        <field name="target_column">revenue</field>
+        <field name="model_config">{
+            "algorithm": "linear_regression",
+            "features": ["quantity", "product", "region"],
+            "test_size": 0.2
+        }</field>
+        <field name="status">completed</field>
+        <field name="result_confidence">0.87</field>
+        <field name="result_data">{
+            "predictions": [5200, 7800, 4200, 10500, 6300],
+            "mae": 245.5,
+            "rmse": 312.8,
+            "r2_score": 0.85
+        }</field>
+    </record>
+
+    <record id="demo_prediction_customer_segment" model="optimaai.prediction">
+        <field name="name">Customer Segmentation</field>
+        <field name="dataset_id" ref="demo_dataset_customers"/>
+        <field name="prediction_type">clustering</field>
+        <field name="model_config">{
+            "algorithm": "kmeans",
+            "n_clusters": 3,
+            "features": ["age", "spending", "visits"]
+        }</field>
+        <field name="status">completed</field>
+        <field name="result_confidence">0.92</field>
+        <field name="result_data">{
+            "clusters": 3,
+            "silhouette_score": 0.72,
+            "cluster_sizes": [150, 230, 120],
+            "labels": [0, 1, 0, 2, 0]
+        }</field>
+    </record>
+
+    <record id="demo_prediction_churn" model="optimaai.prediction">
+        <field name="name">Customer Churn Prediction</field>
+        <field name="dataset_id" ref="demo_dataset_customers"/>
+        <field name="prediction_type">classification</field>
+        <field name="target_column">churn</field>
+        <field name="model_config">{
+            "algorithm": "random_forest",
+            "n_estimators": 100,
+            "features": ["age", "spending", "visits", "segment"]
+        }</field>
+        <field name="status">queued</field>
+    </record>
+
+    <!-- Demo Insights -->
+    <record id="demo_insight_sales_pattern" model="optimaai.insight">
+        <field name="name">Seasonal Sales Pattern Detected</field>
+        <field name="insight_type">pattern</field>
+        <field name="description">Analysis of sales data reveals a strong seasonal pattern with peak sales occurring in Q4. Sales increase by an average of 35% during holiday months.</field>
+        <field name="dataset_id" ref="demo_dataset_sales"/>
+        <field name="prediction_id" ref="demo_prediction_sales_forecast"/>
+        <field name="priority">medium</field>
+        <field name="status">active</field>
+        <field name="recommendations">1. Increase inventory levels by 40% starting October
+2. Plan marketing campaigns for Q4
+3. Ensure adequate staffing for peak period</field>
+        <field name="impact_score">7.5</field>
+        <field name="impact_currency">50000.0</field>
+    </record>
+
+    <record id="demo_insight_low_inventory" model="optimaai.insight">
+        <field name="name">Critical Low Inventory Alert</field>
+        <field name="insight_type">anomaly</field>
+        <field name="description">Two products are below reorder point: Widget B (25 units, reorder at 40) and Gadget Y (10 units, reorder at 30). Immediate action required to prevent stockout.</field>
+        <field name="dataset_id" ref="demo_dataset_inventory"/>
+        <field name="priority">critical</field>
+        <field name="status">active</field>
+        <field name="recommendations">1. Place emergency order for Widget B - minimum 100 units
+2. Place emergency order for Gadget Y - minimum 75 units
+3. Review supplier lead times</field>
+        <field name="impact_score">9.0</field>
+        <field name="impact_currency">15000.0</field>
+    </record>
+
+    <record id="demo_insight_premium_segment" model="optimaai.insight">
+        <field name="name">Premium Customer Segment Growth Opportunity</field>
+        <field name="insight_type">trend</field>
+        <field name="description">Premium segment customers show 45% higher lifetime value. Analysis suggests potential to convert 20% of Standard segment customers to Premium through targeted engagement.</field>
+        <field name="dataset_id" ref="demo_dataset_customers"/>
+        <field name="prediction_id" ref="demo_prediction_customer_segment"/>
+        <field name="priority">high</field>
+        <field name="status">active</field>
+        <field name="recommendations">1. Launch loyalty program for Standard customers
+2. Create targeted upselling campaigns
+3. Offer premium trial periods</field>
+        <field name="impact_score">8.5</field>
+        <field name="impact_currency">75000.0</field>
+    </record>
+
+    <record id="demo_insight_revenue_trend" model="optimaai.insight">
+        <field name="name">Revenue Trend Analysis</field>
+        <field name="insight_type">trend</field>
+        <field name="description">Revenue has shown consistent 12% month-over-month growth. Current trajectory suggests Q1 target will be exceeded by 8%.</field>
+        <field name="dataset_id" ref="demo_dataset_sales"/>
+        <field name="priority">low</field>
+        <field name="status">active</field>
+        <field name="impact_score">6.0</field>
+    </record>
+
+    <!-- Demo Reports -->
+    <record id="demo_report_executive" model="optimaai.report">
+        <field name="name">Executive Summary Report</field>
+        <field name="report_type">summary</field>
+        <field name="description">Monthly executive summary including key metrics, insights, and recommendations.</field>
+        <field name="schedule_type">monthly</field>
+        <field name="status">active</field>
+        <field name="config">{
+            "include_kpis": true,
+            "include_insights": true,
+            "include_predictions": true,
+            "sections": ["overview", "performance", "recommendations"],
+            "format": "pdf"
+        }</field>
+    </record>
+
+    <record id="demo_report_data_quality" model="optimaai.report">
+        <field name="name">Data Quality Report</field>
+        <field name="report_type">data_quality</field>
+        <field name="description">Weekly data quality assessment report for all datasets.</field>
+        <field name="schedule_type">weekly</field>
+        <field name="status">active</field>
+        <field name="config">{
+            "check_completeness": true,
+            "check_accuracy": true,
+            "check_consistency": true,
+            "threshold": 95.0
+        }</field>
+    </record>
+
+    <!-- Demo Canvas -->
+    <record id="demo_canvas_main" model="optimaai.canvas">
+        <field name="name">Main Analytics Dashboard</field>
+        <field name="description">Primary dashboard for business analytics and KPIs.</field>
+        <field name="status">active</field>
+        <field name="is_default">True</field>
+        <field name="layout_config">{
+            "columns": 3,
+            "rows": 4,
+            "gap": 16
+        }</field>
+    </record>
+
+    <!-- Demo Canvas Blocks -->
+    <record id="demo_canvas_block_kpi" model="optimaai.canvas.block">
+        <field name="canvas_id" ref="demo_canvas_main"/>
+        <field name="name">KPI Summary</field>
+        <field name="block_type">kpi</field>
+        <field name="position_x">0</field>
+        <field name="position_y">0</field>
+        <field name="width">2</field>
+        <field name="height">1</field>
+        <field name="config">{
+            "kpis": ["total_predictions", "active_datasets", "open_insights"],
+            "display": "cards"
+        }</field>
+    </record>
+
+    <record id="demo_canvas_block_chart" model="optimaai.canvas.block">
+        <field name="canvas_id" ref="demo_canvas_main"/>
+        <field name="name">Revenue Trend</field>
+        <field name="block_type">chart</field>
+        <field name="position_x">0</field>
+        <field name="position_y">1</field>
+        <field name="width">2</field>
+        <field name="height">2</field>
+        <field name="config">{
+            "chart_type": "line",
+            "dataset_id": "demo_dataset_sales",
+            "x_axis": "date",
+            "y_axis": "revenue",
+            "show_legend": true
+        }</field>
+    </record>
+
+    <record id="demo_canvas_block_insights" model="optimaai.canvas.block">
+        <field name="canvas_id" ref="demo_canvas_main"/>
+        <field name="name">Recent Insights</field>
+        <field name="block_type">insights</field>
+        <field name="position_x">2</field>
+        <field name="position_y">0</field>
+        <field name="width">1</field>
+        <field name="height">3</field>
+        <field name="config">{
+            "limit": 5,
+            "priority_filter": ["high", "critical"],
+            "show_recommendations": true
+        }</field>
+    </record>
+
+    <!-- Demo Integration Config -->
+    <record id="demo_integration_openai" model="optimaai.integration.config">
+        <field name="name">OpenAI Integration</field>
+        <field name="provider">openai</field>
+        <field name="endpoint">https://api.openai.com/v1</field>
+        <field name="is_active">False</field>
+        <field name="config">{
+            "model": "gpt-4",
+            "max_tokens": 2000,
+            "temperature": 0.7
+        }</field>
+    </record>
+
+    <record id="demo_integration_analytics" model="optimaai.integration.config">
+        <field name="name">Custom Analytics API</field>
+        <field name="provider">custom</field>
+        <field name="endpoint">https://analytics.example.com/api</field>
+        <field name="is_active">True</field>
+        <field name="config">{
+            "timeout": 30,
+            "retry_count": 3
+        }</field>
+    </record>
+</odoo>

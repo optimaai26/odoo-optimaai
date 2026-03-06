@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==========================================
+         Main Menu Structure
+         ========================================== -->
+    
+    <!-- Main Menu -->
+    <menuitem id="menu_optimaai_root" 
+              name="OptimaAI" 
+              web_icon="optimaai,static/description/icon.png"
+              sequence="50"/>
+    
+    <!-- Dashboard Menu -->
+    <menuitem id="menu_optimaai_dashboard" 
+              name="Dashboard" 
+              parent="menu_optimaai_root"
+              action="action_dashboard"
+              sequence="10"/>
+    
+    <!-- Data Management Menu -->
+    <menuitem id="menu_optimaai_data" 
+              name="Data" 
+              parent="menu_optimaai_root"
+              sequence="20"/>
+    
+    <menuitem id="menu_optimaai_dataset" 
+              name="Datasets" 
+              parent="menu_optimaai_data"
+              action="action_dataset"
+              sequence="10"/>
+    
+    <!-- Analytics Menu -->
+    <menuitem id="menu_optimaai_analytics" 
+              name="Analytics" 
+              parent="menu_optimaai_root"
+              sequence="30"/>
+    
+    <menuitem id="menu_optimaai_prediction" 
+              name="Predictions" 
+              parent="menu_optimaai_analytics"
+              action="action_prediction"
+              sequence="10"/>
+    
+    <menuitem id="menu_optimaai_insight" 
+              name="Insights" 
+              parent="menu_optimaai_analytics"
+              action="action_insight"
+              sequence="20"/>
+    
+    <menuitem id="menu_optimaai_kpi" 
+              name="KPIs" 
+              parent="menu_optimaai_analytics"
+              action="action_kpi"
+              sequence="30"/>
+    
+    <!-- Reports Menu -->
+    <menuitem id="menu_optimaai_reports" 
+              name="Reports" 
+              parent="menu_optimaai_root"
+              sequence="40"/>
+    
+    <menuitem id="menu_optimaai_report" 
+              name="Custom Reports" 
+              parent="menu_optimaai_reports"
+              action="action_report"
+              sequence="10"/>
+    
+    <!-- Canvas Menu -->
+    <menuitem id="menu_optimaai_canvas" 
+              name="Canvas" 
+              parent="menu_optimaai_root"
+              action="action_canvas"
+              sequence="50"/>
+    
+    <!-- Configuration Menu -->
+    <menuitem id="menu_optimaai_config" 
+              name="Configuration" 
+              parent="menu_optimaai_root"
+              sequence="100"/>
+    
+    <menuitem id="menu_optimaai_notification_config" 
+              name="Notifications" 
+              parent="menu_optimaai_config"
+              action="action_notification_all"
+              sequence="10"/>
+    
+    <menuitem id="menu_optimaai_access_request" 
+              name="Access Requests" 
+              parent="menu_optimaai_config"
+              action="action_access_request"
+              sequence="20"/>
+    
+    <menuitem id="menu_optimaai_integration_config" 
+              name="Integrations" 
+              parent="menu_optimaai_config"
+              action="action_integration_config"
+              sequence="30"/>
+    
+    <!-- User Notifications Menu (in user preferences area) -->
+    <menuitem id="menu_optimaai_my_notifications" 
+              name="My Notifications" 
+              parent="base.menu_base_partner"
+              action="action_notification_my"
+              sequence="100"/>
+    
+    <!-- ==========================================
+         Dashboard Action (Placeholder)
+         ========================================== -->
+    
+    <record id="action_dashboard" model="ir.actions.client">
+        <field name="name">Dashboard</field>
+        <field name="tag">optimaai_dashboard</field>
+        <field name="target">current</field>
+    </record>
+    
+    <!-- ==========================================
+         Access Request Action
+         ========================================== -->
+    
+    <record id="view_access_request_tree" model="ir.ui.view">
+        <field name="name">optimaai.access.request.tree</field>
+        <field name="model">optimaai.access.request</field>
+        <field name="arch" type="xml">
+            <tree string="Access Requests" decoration-warning="status=='pending'"
+                  decoration-success="status=='approved'" decoration-danger="status=='rejected'">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="request_type"/>
+                <field name="status" widget="badge"/>
+                <field name="create_date"/>
+                <field name="approved_date"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="view_access_request_form" model="ir.ui.view">
+        <field name="name">optimaai.access.request.form</field>
+        <field name="model">optimaai.access.request</field>
+        <field name="arch" type="xml">
+            <form string="Access Request">
+                <header>
+                    <button name="action_approve" type="object" string="Approve" 
+                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'pending')]}"/>
+                    <button name="action_reject" type="object" string="Reject" 
+                            attrs="{'invisible': [('status', '!=', 'pending')]}"/>
+                    <button name="action_cancel" type="object" string="Cancel" 
+                            attrs="{'invisible': [('status', '!=', 'pending')]}"/>
+                    <field name="status" widget="statusbar" statusbar_visible="pending,approved,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Request Title"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="request_type"/>
+                            <field name="requested_model"/>
+                        </group>
+                        <group>
+                            <field name="status"/>
+                            <field name="approved_by_id"/>
+                            <field name="approved_date"/>
+                        </group>
+                    </group>
+                    <group string="Justification">
+                        <field name="justification" nolabel="1" widget="text"/>
+                    </group>
+                    <group string="Rejection Reason" attrs="{'invisible': [('status', '!=', 'rejected')]}">
+                        <field name="rejection_reason" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="view_access_request_search" model="ir.ui.view">
+        <field name="name">optimaai.access.request.search</field>
+        <field name="model">optimaai.access.request</field>
+        <field name="arch" type="xml">
+            <search string="Search Access Requests">
+                <field name="name"/>
+                <field name="user_id"/>
+                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Type" name="group_type" context="{'group_by': 'request_type'}"/>
+                    <filter string="User" name="group_user" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <record id="action_access_request" model="ir.actions.act_window">
+        <field name="name">Access Requests</field>
+        <field name="res_model">optimaai.access.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_access_request_search"/>
+        <field name="context">{'search_default_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No access requests
+            </p>
+            <p>
+                Access requests for restricted features will appear here.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ==========================================
+         Integration Config Action
+         ========================================== -->
+    
+    <record id="view_integration_config_tree" model="ir.ui.view">
+        <field name="name">optimaai.integration.config.tree</field>
+        <field name="model">optimaai.integration.config</field>
+        <field name="arch" type="xml">
+            <tree string="Integrations" decoration-muted="active==False">
+                <field name="name"/>
+                <field name="provider"/>
+                <field name="active" widget="toggle"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="view_integration_config_form" model="ir.ui.view">
+        <field name="name">optimaai.integration.config.form</field>
+        <field name="model">optimaai.integration.config</field>
+        <field name="arch" type="xml">
+            <form string="Integration">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Integration Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="provider"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Configuration" name="configuration">
+                            <group>
+                                <field name="config" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Credentials" name="credentials">
+                            <group>
+                                <field name="credentials" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="action_integration_config" model="ir.actions.act_window">
+        <field name="name">Integrations</field>
+        <field name="res_model">optimaai.integration.config</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No integrations configured
+            </p>
+            <p>
+                Configure external service integrations here.
+            </p>
+        </field>
+    </record>
+    
+</odoo>

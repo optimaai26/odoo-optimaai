@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==========================================
+         Dataset Views
+         ========================================== -->
+    
+    <!-- Dataset Tree View -->
+    <record id="view_dataset_tree" model="ir.ui.view">
+        <field name="name">optimaai.dataset.tree</field>
+        <field name="model">optimaai.dataset</field>
+        <field name="arch" type="xml">
+            <tree string="Datasets" decoration-warning="status=='draft'" decoration-success="status=='validated'">
+                <field name="name"/>
+                <field name="data_source"/>
+                <field name="row_count"/>
+                <field name="status" widget="badge" 
+                       decoration-info="status=='draft'" 
+                       decoration-warning="status=='processing'"
+                       decoration-success="status=='validated'"
+                       decoration-danger="status=='error'"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="create_date"/>
+                <field name="created_by_id"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Dataset Form View -->
+    <record id="view_dataset_form" model="ir.ui.view">
+        <field name="name">optimaai.dataset.form</field>
+        <field name="model">optimaai.dataset</field>
+        <field name="arch" type="xml">
+            <form string="Dataset">
+                <header>
+                    <button name="action_validate" type="object" string="Validate" 
+                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'draft')]}"/>
+                    <button name="action_process" type="object" string="Process" 
+                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'validated')]}"/>
+                    <button name="action_reset" type="object" string="Reset to Draft" 
+                            attrs="{'invisible': [('status', '=', 'draft')]}"/>
+                    <field name="status" widget="statusbar" 
+                           statusbar_visible="draft,validated,processed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="action" name="%(action_prediction_by_dataset)d"
+                                icon="fa-magic" string="Predictions"
+                                attrs="{'invisible': [('prediction_count', '=', 0)]}">
+                            <field name="prediction_count"/>
+                        </button>
+                        <button class="oe_stat_button" type="action" name="%(action_insight_by_dataset)d"
+                                icon="fa-lightbulb-o" string="Insights"
+                                attrs="{'invisible': [('insight_count', '=', 0)]}">
+                            <field name="insight_count"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Dataset Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="data_source"/>
+                            <field name="data_format"/>
+                            <field name="row_count"/>
+                            <field name="file_size" widget="integer"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="created_by_id"/>
+                            <field name="import_date"/>
+                            <field name="last_sync_date"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <!-- Data Preview Tab -->
+                        <page string="Data Preview" name="data_preview">
+                            <field name="data_raw" widget="optimaai_data_preview"/>
+                        </page>
+                        
+                        <!-- Columns Tab -->
+                        <page string="Columns" name="columns">
+                            <field name="column_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="column_type"/>
+                                    <field name="required"/>
+                                    <field name="unique_count"/>
+                                    <field name="missing_count"/>
+                                    <field name="is_target"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <!-- Configuration Tab -->
+                        <page string="Configuration" name="configuration">
+                            <group>
+                                <field name="data_raw" widget="text"/>
+                            </group>
+                        </page>
+                        
+                        <!-- Data Summary Tab -->
+                        <page string="Data Summary" name="data_summary">
+                            <field name="data_summary" widget="text"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Dataset Search View -->
+    <record id="view_dataset_search" model="ir.ui.view">
+        <field name="name">optimaai.dataset.search</field>
+        <field name="model">optimaai.dataset</field>
+        <field name="arch" type="xml">
+            <search string="Search Datasets">
+                <field name="name"/>
+                <field name="data_source"/>
+                <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
+                <filter name="validated" string="Validated" domain="[('status', '=', 'validated')]"/>
+                <filter name="processed" string="Processed" domain="[('status', '=', 'processed')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Data Source" name="group_source" context="{'group_by': 'data_source'}"/>
+                    <filter string="Created By" name="group_created" context="{'group_by': 'created_by_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Dataset Kanban View -->
+    <record id="view_dataset_kanban" model="ir.ui.view">
+        <field name="name">optimaai.dataset.kanban</field>
+        <field name="model">optimaai.dataset</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status" class="o_kanban_small_column">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="status"/>
+                <field name="row_count"/>
+                <field name="data_source"/>
+                <field name="create_date"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <strong><field name="name"/></strong>
+                                <div class="text-muted">
+                                    <i class="fa fa-database"/> <field name="data_source"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-table"/> <field name="row_count"/> rows
+                                </div>
+                            </div>
+                            <div class="oe_kanban_bottom_right">
+                                <field name="status" widget="label" 
+                                       decoration-info="status=='draft'"
+                                       decoration-success="status=='validated'"
+                                       decoration-warning="status=='processing'"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Dataset Action -->
+    <record id="action_dataset" model="ir.actions.act_window">
+        <field name="name">Datasets</field>
+        <field name="res_model">optimaai.dataset</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="search_view_id" ref="view_dataset_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No datasets found
+            </p>
+            <p>
+                Create your first dataset to start analyzing your data.
+            </p>
+        </field>
+    </record>
+
+    <!-- Dataset Column Views -->
+    <record id="view_dataset_column_tree" model="ir.ui.view">
+        <field name="name">optimaai.dataset.column.tree</field>
+        <field name="model">optimaai.dataset.column</field>
+        <field name="arch" type="xml">
+            <tree string="Dataset Columns">
+                <field name="dataset_id"/>
+                <field name="name"/>
+                <field name="column_type"/>
+                <field name="required"/>
+                <field name="is_target"/>
+                <field name="unique_count"/>
+                <field name="missing_count"/>
+            </tree>
+        </field>
+    </record>
+    
+</odoo>

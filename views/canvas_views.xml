@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==========================================
+         Canvas Views
+         ========================================== -->
+    
+    <!-- Canvas Tree View -->
+    <record id="view_canvas_tree" model="ir.ui.view">
+        <field name="name">optimaai.canvas.tree</field>
+        <field name="model">optimaai.canvas</field>
+        <field name="arch" type="xml">
+            <tree string="Canvases">
+                <field name="name"/>
+                <field name="canvas_type"/>
+                <field name="status" widget="badge"/>
+                <field name="block_count"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="create_date"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Canvas Form View -->
+    <record id="view_canvas_form" model="ir.ui.view">
+        <field name="name">optimaai.canvas.form</field>
+        <field name="model">optimaai.canvas</field>
+        <field name="arch" type="xml">
+            <form string="Canvas">
+                <header>
+                    <button name="action_run" type="object" string="Run Canvas" 
+                            class="btn-primary" attrs="{'invisible': [('status', '=', 'running')]}"/>
+                    <button name="action_stop" type="object" string="Stop" 
+                            attrs="{'invisible': [('status', '!=', 'running')]}"/>
+                    <button name="action_duplicate" type="object" string="Duplicate"/>
+                    <field name="status" widget="statusbar" statusbar_visible="draft,active,running"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_blocks"
+                                icon="fa-th-large" string="Blocks">
+                            <field name="block_count"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Canvas Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="canvas_type"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="created_by_id"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <!-- Canvas Designer Tab -->
+                        <page string="Designer" name="designer">
+                            <div class="optimaai_canvas_designer">
+                                <field name="canvas_config" widget="text"/>
+                            </div>
+                        </page>
+                        
+                        <!-- Blocks Tab -->
+                        <page string="Blocks" name="blocks">
+                            <field name="block_ids" context="{'default_canvas_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="block_type"/>
+                                    <field name="sequence"/>
+                                    <field name="position_x"/>
+                                    <field name="position_y"/>
+                                    <field name="is_active" widget="toggle"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <!-- Connections Tab -->
+                        <page string="Connections" name="connections">
+                            <field name="connection_ids" context="{'default_canvas_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="source_block_id"/>
+                                    <field name="target_block_id"/>
+                                    <field name="connection_type"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <!-- Execution Log Tab -->
+                        <page string="Execution Log" name="execution_log">
+                            <group>
+                                <field name="execution_log" nolabel="1" widget="text"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Canvas Search View -->
+    <record id="view_canvas_search" model="ir.ui.view">
+        <field name="name">optimaai.canvas.search</field>
+        <field name="model">optimaai.canvas</field>
+        <field name="arch" type="xml">
+            <search string="Search Canvases">
+                <field name="name"/>
+                <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
+                <filter name="active" string="Active" domain="[('status', '=', 'active')]"/>
+                <filter name="running" string="Running" domain="[('status', '=', 'running')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Type" name="group_type" context="{'group_by': 'canvas_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Canvas Action -->
+    <record id="action_canvas" model="ir.actions.act_window">
+        <field name="name">Canvases</field>
+        <field name="res_model">optimaai.canvas</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_canvas_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No canvases found
+            </p>
+            <p>
+                Create a canvas to design data workflows and analysis pipelines.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Canvas Block Views -->
+    <record id="view_canvas_block_tree" model="ir.ui.view">
+        <field name="name">optimaai.canvas.block.tree</field>
+        <field name="model">optimaai.canvas.block</field>
+        <field name="arch" type="xml">
+            <tree string="Canvas Blocks">
+                <field name="canvas_id"/>
+                <field name="name"/>
+                <field name="block_type"/>
+                <field name="sequence"/>
+                <field name="is_active" widget="toggle"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="view_canvas_block_form" model="ir.ui.view">
+        <field name="name">optimaai.canvas.block.form</field>
+        <field name="model">optimaai.canvas.block</field>
+        <field name="arch" type="xml">
+            <form string="Canvas Block">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Block Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="canvas_id"/>
+                            <field name="block_type"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="position_x"/>
+                            <field name="position_y"/>
+                            <field name="is_active"/>
+                        </group>
+                    </group>
+                    <group string="Configuration">
+                        <field name="config" nolabel="1" widget="text"/>
+                    </group>
+                    <group string="Output">
+                        <field name="output_data" nolabel="1" widget="text" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="action_canvas_block" model="ir.actions.act_window">
+        <field name="name">Canvas Blocks</field>
+        <field name="res_model">optimaai.canvas.block</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+</odoo>

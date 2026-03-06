@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- ==========================================
+         Default KPI Templates
+         ========================================== -->
+    
+    <!-- Data Quality KPIs -->
+    <record id="kpi_data_accuracy" model="optimaai.kpi">
+        <field name="name">Data Accuracy Rate</field>
+        <field name="code">DATA_ACC</field>
+        <field name="kpi_type">percentage</field>
+        <field name="category">data_quality</field>
+        <field name="description">Percentage of data records that pass validation checks</field>
+        <field name="calculation_formula">COUNT(valid_records) / COUNT(total_records) * 100</field>
+        <field name="target_value">95.0</field>
+        <field name="unit">%</field>
+        <field name="status">draft</field>
+        <field name="color">#28a745</field>
+    </record>
+    
+    <record id="kpi_data_completeness" model="optimaai.kpi">
+        <field name="name">Data Completeness</field>
+        <field name="code">DATA_COMP</field>
+        <field name="kpi_type">percentage</field>
+        <field name="category">data_quality</field>
+        <field name="description">Percentage of required fields that are populated</field>
+        <field name="calculation_formula">COUNT(filled_required_fields) / COUNT(total_required_fields) * 100</field>
+        <field name="target_value">98.0</field>
+        <field name="unit">%</field>
+        <field name="status">draft</field>
+        <field name="color">#17a2b8</field>
+    </record>
+    
+    <!-- Prediction Performance KPIs -->
+    <record id="kpi_prediction_accuracy" model="optimaai.kpi">
+        <field name="name">Prediction Accuracy</field>
+        <field name="code">PRED_ACC</field>
+        <field name="kpi_type">percentage</field>
+        <field name="category">prediction</field>
+        <field name="description">Average accuracy of completed predictions</field>
+        <field name="calculation_formula">AVG(result_confidence) WHERE status='completed'</field>
+        <field name="target_value">85.0</field>
+        <field name="unit">%</field>
+        <field name="status">draft</field>
+        <field name="color">#007bff</field>
+    </record>
+    
+    <record id="kpi_prediction_count" model="optimaai.kpi">
+        <field name="name">Predictions Completed</field>
+        <field name="code">PRED_COUNT</field>
+        <field name="kpi_type">count</field>
+        <field name="category">prediction</field>
+        <field name="description">Total number of completed predictions this month</field>
+        <field name="calculation_formula">COUNT(predictions) WHERE status='completed' AND create_date >= start_of_month</field>
+        <field name="target_value">100</field>
+        <field name="unit">predictions</field>
+        <field name="status">draft</field>
+        <field name="color">#6610f2</field>
+    </record>
+    
+    <!-- Insight KPIs -->
+    <record id="kpi_active_insights" model="optimaai.kpi">
+        <field name="name">Active Insights</field>
+        <field name="code">INS_ACT</field>
+        <field name="kpi_type">count</field>
+        <field name="category">insight</field>
+        <field name="description">Number of active insights currently being tracked</field>
+        <field name="calculation_formula">COUNT(insights) WHERE status='active'</field>
+        <field name="target_value">50</field>
+        <field name="unit">insights</field>
+        <field name="status">draft</field>
+        <field name="color">#fd7e14</field>
+    </record>
+    
+    <record id="kpi_high_priority_insights" model="optimaai.kpi">
+        <field name="name">High Priority Insights</field>
+        <field name="code">INS_HIGH</field>
+        <field name="kpi_type">count</field>
+        <field name="category">insight</field>
+        <field name="description">Number of high priority insights requiring attention</field>
+        <field name="calculation_formula">COUNT(insights) WHERE status='active' AND priority IN ('high', 'critical')</field>
+        <field name="target_value">10</field>
+        <field name="unit">insights</field>
+        <field name="status">draft</field>
+        <field name="color">#dc3545</field>
+    </record>
+    
+    <!-- System Performance KPIs -->
+    <record id="kpi_dataset_count" model="optimaai.kpi">
+        <field name="name">Total Datasets</field>
+        <field name="code">DS_COUNT</field>
+        <field name="kpi_type">count</field>
+        <field name="category">system</field>
+        <field name="description">Total number of datasets in the system</field>
+        <field name="calculation_formula">COUNT(datasets)</field>
+        <field name="target_value">500</field>
+        <field name="unit">datasets</field>
+        <field name="status">draft</field>
+        <field name="color">#20c997</field>
+    </record>
+    
+    <record id="kpi_report_count" model="optimaai.kpi">
+        <field name="name">Reports Generated</field>
+        <field name="code">RPT_COUNT</field>
+        <field name="kpi_type">count</field>
+        <field name="category">system</field>
+        <field name="description">Total number of reports generated this month</field>
+        <field name="calculation_formula">COUNT(reports) WHERE create_date >= start_of_month</field>
+        <field name="target_value">25</field>
+        <field name="unit">reports</field>
+        <field name="status">draft</field>
+        <field name="color">#6f42c1</field>
+    </record>
+    
+</odoo>

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==========================================
+         KPI Views
+         ========================================== -->
+    
+    <!-- KPI Tree View -->
+    <record id="view_kpi_tree" model="ir.ui.view">
+        <field name="name">optimaai.kpi.tree</field>
+        <field name="model">optimaai.kpi</field>
+        <field name="arch" type="xml">
+            <tree string="KPIs" decoration-success="value >= target_value" 
+                  decoration-warning="value &gt;= target_value*0.8 and value &lt; target_value"
+                  decoration-danger="value &lt; target_value*0.8">
+                <field name="name"/>
+                <field name="kpi_type"/>
+                <field name="value"/>
+                <field name="target_value"/>
+                <field name="unit"/>
+                <field name="status" widget="badge"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- KPI Form View -->
+    <record id="view_kpi_form" model="ir.ui.view">
+        <field name="name">optimaai.kpi.form</field>
+        <field name="model">optimaai.kpi</field>
+        <field name="arch" type="xml">
+            <form string="KPI">
+                <header>
+                    <button name="action_calculate" type="object" string="Calculate Now" 
+                            class="btn-primary"/>
+                    <field name="status" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="action" name="%(action_insight_by_kpi)d"
+                                icon="fa-lightbulb-o" string="Insights"
+                                attrs="{'invisible': [('insight_count', '=', 0)]}">
+                            <field name="insight_count"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="KPI Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="kpi_type"/>
+                            <field name="category"/>
+                        </group>
+                        <group>
+                            <field name="unit"/>
+                            <field name="status"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Values">
+                        <group>
+                            <field name="value"/>
+                            <field name="previous_value"/>
+                        </group>
+                        <group>
+                            <field name="target_value"/>
+                            <field name="threshold_warning"/>
+                            <field name="threshold_critical"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <!-- Calculation Tab -->
+                        <page string="Calculation" name="calculation">
+                            <group>
+                                <field name="calculation_type"/>
+                                <field name="calculation_formula" 
+                                       attrs="{'invisible': [('calculation_type', '!=', 'formula')]}"/>
+                                <field name="data_source_id" 
+                                       attrs="{'invisible': [('calculation_type', '!=', 'datasource')]}"/>
+                                <field name="query" widget="text"
+                                       attrs="{'invisible': [('calculation_type', '!=', 'datasource')]}"/>
+                            </group>
+                        </page>
+                        
+                        <!-- Schedule Tab -->
+                        <page string="Schedule" name="schedule">
+                            <group>
+                                <field name="schedule_type"/>
+                                <field name="last_calculated"/>
+                                <field name="next_calculation"/>
+                            </group>
+                        </page>
+                        
+                        <!-- History Tab -->
+                        <page string="History" name="history">
+                            <field name="history_data" widget="text"/>
+                        </page>
+                        
+                        <!-- Trend Tab -->
+                        <page string="Trend Analysis" name="trend">
+                            <group>
+                                <field name="trend_direction"/>
+                                <field name="trend_percentage"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- KPI Search View -->
+    <record id="view_kpi_search" model="ir.ui.view">
+        <field name="name">optimaai.kpi.search</field>
+        <field name="model">optimaai.kpi</field>
+        <field name="arch" type="xml">
+            <search string="Search KPIs">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <filter name="on_track" string="On Track" domain="[('status', '=', 'on_track')]"/>
+                <filter name="warning" string="Warning" domain="[('status', '=', 'warning')]"/>
+                <filter name="critical" string="Critical" domain="[('status', '=', 'critical')]"/>
+                <separator/>
+                <filter name="upward" string="Upward Trend" domain="[('trend_direction', '=', 'up')]"/>
+                <filter name="downward" string="Downward Trend" domain="[('trend_direction', '=', 'down')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Type" name="group_type" context="{'group_by': 'kpi_type'}"/>
+                    <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
+                    <filter string="Trend" name="group_trend" context="{'group_by': 'trend_direction'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- KPI Kanban View -->
+    <record id="view_kpi_kanban" model="ir.ui.view">
+        <field name="name">optimaai.kpi.kanban</field>
+        <field name="model">optimaai.kpi</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="value"/>
+                <field name="target_value"/>
+                <field name="unit"/>
+                <field name="status"/>
+                <field name="trend_direction"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <span class="text-muted">Current:</span>
+                                        <strong><field name="value"/> <field name="unit"/></strong>
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <span class="text-muted">Target:</span>
+                                        <field name="target_value"/> <field name="unit"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="oe_kanban_bottom_right">
+                                <span t-if="record.trend_direction.value == 'up'" class="text-success">
+                                    <i class="fa fa-arrow-up"/> Up
+                                </span>
+                                <span t-if="record.trend_direction.value == 'down'" class="text-danger">
+                                    <i class="fa fa-arrow-down"/> Down
+                                </span>
+                                <span t-if="record.trend_direction.value == 'stable'" class="text-muted">
+                                    <i class="fa fa-minus"/> Stable
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- KPI Action -->
+    <record id="action_kpi" model="ir.actions.act_window">
+        <field name="name">KPIs</field>
+        <field name="res_model">optimaai.kpi</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="search_view_id" ref="view_kpi_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No KPIs found
+            </p>
+            <p>
+                Define KPIs to track and monitor your business performance.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Insight Action by KPI -->
+    <record id="action_insight_by_kpi" model="ir.actions.act_window">
+        <field name="name">Insights</field>
+        <field name="res_model">optimaai.insight</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('kpi_id', '=', active_id)]</field>
+        <field name="context">{'default_kpi_id': active_id}</field>
+    </record>
+    
+</odoo>

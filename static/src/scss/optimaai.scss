@@ -1,0 +1,700 @@
+// ============================================
+// OptimaAI Module — Backend Styles (SCSS)
+// ============================================
+
+// Variables
+$optimaai-primary: #007bff;
+$optimaai-success: #28a745;
+$optimaai-danger: #dc3545;
+$optimaai-warning: #ffc107;
+$optimaai-info: #17a2b8;
+$optimaai-dark: #212529;
+$optimaai-muted: #6c757d;
+$optimaai-light: #f8f9fa;
+$optimaai-border: #e9ecef;
+
+$card-radius: 8px;
+$card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+$card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+
+
+// ============================================
+// General Layout
+// ============================================
+
+.o_optimaai_container {
+    padding: 16px;
+}
+
+
+// ============================================
+// Dataset Card
+// ============================================
+
+.o_dataset_card {
+    background: #fff;
+    border-radius: $card-radius;
+    box-shadow: $card-shadow;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: box-shadow $transition-normal;
+
+    &:hover {
+        box-shadow: $card-shadow-hover;
+    }
+
+    &_header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    &_title {
+        font-size: 16px;
+        font-weight: 600;
+        color: $optimaai-dark;
+    }
+
+    &_body {
+        color: $optimaai-muted;
+        font-size: 14px;
+    }
+}
+
+
+// ============================================
+// Status Badges
+// ============================================
+
+.o_status_badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+$status-colors: (
+    draft:      ($optimaai-light,  $optimaai-muted),
+    pending:    (#fff3cd, #856404),
+    validated:  (#d4edda, #155724),
+    active:     (#d4edda, #155724),
+    completed:  (#d4edda, #155724),
+    processing: (#cce5ff, #004085),
+    queued:     (#cce5ff, #004085),
+    error:      (#f8d7da, #721c24),
+    cancelled:  (#f8d7da, #721c24),
+    archived:   (#e2e3e5, #383d41),
+    dismissed:  (#d6d8db, #1b1e21),
+);
+
+@each $status, $colors in $status-colors {
+    .o_status_#{$status} {
+        background-color: nth($colors, 1);
+        color: nth($colors, 2);
+    }
+}
+
+
+// ============================================
+// Priority Badges
+// ============================================
+
+.o_priority_badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+$priority-colors: (
+    low:      (#e8f5e9, #2e7d32),
+    medium:   (#fff8e1, #f57c00),
+    high:     (#ffebee, #c62828),
+    critical: (#c62828, #fff),
+);
+
+@each $priority, $colors in $priority-colors {
+    .o_priority_#{$priority} {
+        background-color: nth($colors, 1);
+        color: nth($colors, 2);
+    }
+}
+
+
+// ============================================
+// Insight Card
+// ============================================
+
+.o_insight_card {
+    background: #fff;
+    border-left: 4px solid $optimaai-info;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 12px;
+
+    $insight-types: (
+        pattern:        $optimaai-info,
+        anomaly:        $optimaai-danger,
+        trend:          $optimaai-success,
+        recommendation: $optimaai-warning,
+        prediction:     #6f42c1,
+    );
+
+    @each $type, $color in $insight-types {
+        &.o_insight_#{$type} {
+            border-left-color: $color;
+        }
+    }
+}
+
+
+// ============================================
+// Prediction Result Display
+// ============================================
+
+.o_prediction_result {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 24px;
+    color: #fff;
+    text-align: center;
+}
+
+.o_prediction_confidence {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.o_prediction_confidence_label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-top: 8px;
+}
+
+.o_confidence_high { color: $optimaai-success; }
+.o_confidence_medium { color: $optimaai-warning; }
+.o_confidence_low { color: $optimaai-danger; }
+
+
+// ============================================
+// KPI Card
+// ============================================
+
+.o_kpi_card {
+    background: #fff;
+    border-radius: $card-radius;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: box-shadow $transition-normal;
+
+    &:hover {
+        box-shadow: $card-shadow-hover;
+    }
+}
+
+.o_kpi_value {
+    font-size: 32px;
+    font-weight: 700;
+    color: $optimaai-dark;
+    line-height: 1;
+}
+
+.o_kpi_label {
+    font-size: 14px;
+    color: $optimaai-muted;
+    margin-top: 8px;
+}
+
+.o_kpi_trend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 14px;
+
+    &_up { color: $optimaai-success; }
+    &_down { color: $optimaai-danger; }
+    &_stable { color: $optimaai-muted; }
+    &_icon { margin-right: 4px; }
+}
+
+
+// ============================================
+// Canvas Dashboard
+// ============================================
+
+.o_canvas_container {
+    display: grid;
+    gap: 16px;
+    padding: 16px;
+    min-height: calc(100vh - 100px);
+}
+
+.o_canvas_block {
+    background: #fff;
+    border-radius: $card-radius;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    overflow: auto;
+
+    &_header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid $optimaai-border;
+    }
+
+    &_title {
+        font-size: 16px;
+        font-weight: 600;
+        color: $optimaai-dark;
+    }
+
+    &_content {
+        min-height: 100px;
+    }
+}
+
+
+// ============================================
+// Chart Container
+// ============================================
+
+.o_chart_container {
+    width: 100%;
+    height: 300px;
+}
+
+
+// ============================================
+// Notification Panel
+// ============================================
+
+.o_notification_panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+    z-index: 1050;
+    transition: right $transition-normal;
+    overflow-y: auto;
+
+    &.o_open {
+        right: 0;
+    }
+}
+
+.o_notification_header {
+    padding: 16px;
+    border-bottom: 1px solid $optimaai-border;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.o_notification_list {
+    padding: 8px;
+}
+
+.o_notification_item {
+    padding: 12px;
+    border-radius: $card-radius;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background-color $transition-fast;
+
+    &:hover {
+        background-color: $optimaai-light;
+    }
+
+    &.o_unread {
+        background-color: #e8f4f8;
+    }
+
+    $notification-types: (
+        info:    $optimaai-info,
+        success: $optimaai-success,
+        warning: $optimaai-warning,
+        error:   $optimaai-danger,
+    );
+
+    @each $type, $color in $notification-types {
+        &.o_notification_#{$type} {
+            border-left: 3px solid $color;
+        }
+    }
+}
+
+.o_notification_title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.o_notification_message {
+    font-size: 13px;
+    color: $optimaai-muted;
+}
+
+.o_notification_time {
+    font-size: 11px;
+    color: #adb5bd;
+    margin-top: 8px;
+}
+
+
+// ============================================
+// Data Table
+// ============================================
+
+.o_data_table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid $optimaai-border;
+    }
+
+    th {
+        background-color: $optimaai-light;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    tr:hover {
+        background-color: $optimaai-light;
+    }
+}
+
+
+// ============================================
+// Form Styles
+// ============================================
+
+.o_form_group {
+    margin-bottom: 16px;
+}
+
+.o_form_label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.o_form_input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+
+    &:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba($optimaai-primary, 0.25);
+        outline: none;
+    }
+}
+
+.o_form_textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.o_form_select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+
+// ============================================
+// Button Styles
+// ============================================
+
+.o_btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all $transition-fast;
+    border: none;
+
+    $btn-colors: (
+        primary:   ($optimaai-primary, #0069d9),
+        secondary: ($optimaai-muted,   #5a6268),
+        success:   ($optimaai-success, #218838),
+        danger:    ($optimaai-danger,  #c82333),
+        warning:   ($optimaai-warning, #e0a800),
+    );
+
+    @each $variant, $colors in $btn-colors {
+        &_#{$variant} {
+            background-color: nth($colors, 1);
+            color: if($variant == "warning", $optimaai-dark, #fff);
+
+            &:hover {
+                background-color: nth($colors, 2);
+            }
+        }
+    }
+
+    &_outline {
+        background-color: transparent;
+        border: 1px solid #ced4da;
+        color: #495057;
+
+        &:hover {
+            background-color: $optimaai-light;
+        }
+    }
+}
+
+
+// ============================================
+// Progress Bar
+// ============================================
+
+.o_progress {
+    height: 8px;
+    background-color: $optimaai-border;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.o_progress_bar {
+    height: 100%;
+    background-color: $optimaai-primary;
+    border-radius: 4px;
+    transition: width $transition-normal;
+
+    &.o_success { background-color: $optimaai-success; }
+    &.o_warning { background-color: $optimaai-warning; }
+    &.o_danger  { background-color: $optimaai-danger; }
+}
+
+
+// ============================================
+// Loading Spinner
+// ============================================
+
+.o_spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: $optimaai-primary;
+    animation: optimaai-spin 1s ease-in-out infinite;
+}
+
+@keyframes optimaai-spin {
+    to { transform: rotate(360deg); }
+}
+
+.o_loading_overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+
+// ============================================
+// Empty State
+// ============================================
+
+.o_empty_state {
+    text-align: center;
+    padding: 48px 24px;
+    color: $optimaai-muted;
+
+    &_icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    &_title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #495057;
+    }
+
+    &_description {
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+}
+
+
+// ============================================
+// Tooltip
+// ============================================
+
+.o_tooltip {
+    position: relative;
+
+    .o_tooltip_content {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: $optimaai-dark;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity $transition-fast, visibility $transition-fast;
+        z-index: 1000;
+    }
+
+    &:hover .o_tooltip_content {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+
+// ============================================
+// Dashboard Specific
+// ============================================
+
+.o_optimaai_dashboard {
+    padding: 24px;
+
+    .o_dashboard_header {
+        margin-bottom: 24px;
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: $optimaai-dark;
+        }
+    }
+
+    .o_dashboard_kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .o_dashboard_section {
+        margin-bottom: 24px;
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: $optimaai-dark;
+        }
+    }
+}
+
+
+// ============================================
+// Responsive
+// ============================================
+
+@media (max-width: 768px) {
+    .o_canvas_container {
+        grid-template-columns: 1fr !important;
+    }
+
+    .o_notification_panel {
+        width: 100%;
+        right: -100%;
+    }
+
+    .o_kpi_value {
+        font-size: 24px;
+    }
+
+    .o_optimaai_dashboard {
+        .o_dashboard_kpis {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
+
+// ============================================
+// Dark Mode Support
+// ============================================
+
+.o_dark_mode {
+    .o_dataset_card,
+    .o_insight_card,
+    .o_kpi_card,
+    .o_canvas_block,
+    .o_notification_panel {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    .o_dataset_card_title,
+    .o_canvas_block_title,
+    .o_kpi_value {
+        color: #e0e0e0;
+    }
+
+    .o_dataset_card_body,
+    .o_kpi_label {
+        color: #a0a0a0;
+    }
+
+    .o_form_input,
+    .o_form_select {
+        background-color: #2d2d2d;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+
+    .o_data_table {
+        th {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        td {
+            border-bottom-color: #404040;
+        }
+
+        tr:hover {
+            background-color: #2d2d2d;
+        }
+    }
+}

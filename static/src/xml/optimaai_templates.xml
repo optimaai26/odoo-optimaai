@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- ==========================================
+         Notification Bell Systray Template
+         ========================================== -->
+
+    <t t-name="optimaai.NotificationBell">
+        <div class="o_optimaai_systray">
+            <div class="o_notification_bell position-relative" t-on-click="togglePanel"
+                 role="button" aria-label="Notifications">
+                <i class="fa fa-bell fa-lg"/>
+                <span t-if="state.count > 0"
+                      class="o_notification_count badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle"
+                      t-esc="formattedCount"/>
+            </div>
+
+            <!-- Notification Panel Slide-out -->
+            <div t-attf-class="o_notification_panel #{state.panelOpen ? 'o_open' : ''}">
+                <div class="o_notification_header">
+                    <h5 class="mb-0 fw-bold">Notifications</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-link text-muted" t-on-click="markAllRead">
+                            Mark all read
+                        </button>
+                        <button class="btn btn-sm btn-link text-muted" t-on-click="closePanel">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                </div>
+                <div class="o_notification_list">
+                    <t t-if="state.notifications.length === 0">
+                        <div class="o_empty_state p-4 text-center text-muted">
+                            <i class="fa fa-bell-slash fa-2x mb-2"/>
+                            <p>No notifications</p>
+                        </div>
+                    </t>
+                    <t t-foreach="state.notifications" t-as="notif" t-key="notif.id">
+                        <div t-attf-class="o_notification_item o_notification_#{notif.notification_type} #{notif.is_read ? '' : 'o_unread'}"
+                             t-on-click="() => this.onNotificationClick(notif)">
+                            <div class="o_notification_title">
+                                <i t-attf-class="fa #{getTypeIcon(notif.notification_type)} me-2"/>
+                                <t t-esc="notif.name"/>
+                            </div>
+                            <div class="o_notification_message" t-esc="notif.message"/>
+                            <div class="o_notification_time" t-esc="notif.create_date"/>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+
+
+    <!-- ==========================================
+         KPI Card Template
+         ========================================== -->
+
+    <t t-name="optimaai.KPICard">
+        <div class="o_kpi_card" t-on-click="onClick">
+            <div class="o_kpi_value" t-esc="props.kpi.value"/>
+            <div class="o_kpi_label" t-esc="props.kpi.name"/>
+            <div t-attf-class="o_kpi_trend #{trendClass}">
+                <i t-attf-class="fa #{trendIcon} o_kpi_trend_icon"/>
+                <span t-if="props.kpi.trend_percentage"
+                      t-esc="(props.kpi.trend_percentage || 0) + '%'"/>
+            </div>
+        </div>
+    </t>
+
+
+    <!-- ==========================================
+         Dataset Preview Template
+         ========================================== -->
+
+    <t t-name="optimaai.DatasetPreview">
+        <div class="o_dataset_preview">
+            <table class="o_data_table table table-sm">
+                <thead>
+                    <tr>
+                        <t t-foreach="state.columns" t-as="col" t-key="col">
+                            <th t-esc="col"/>
+                        </t>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="state.data" t-as="row" t-key="row_index">
+                        <tr class="o_dataset_row"
+                            t-on-click="() => this.onRowClick(row, row_index)">
+                            <t t-foreach="state.columns" t-as="col" t-key="col">
+                                <td t-esc="row[col] !== undefined ? row[col] : ''"/>
+                            </t>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+            <t t-if="state.data.length === 0">
+                <div class="o_empty_state">
+                    <i class="fa fa-table o_empty_state_icon"/>
+                    <p class="o_empty_state_title">No data to display</p>
+                </div>
+            </t>
+        </div>
+    </t>
+
+
+    <!-- ==========================================
+         Prediction Result Template
+         ========================================== -->
+
+    <t t-name="optimaai.PredictionResult">
+        <div class="o_prediction_result">
+            <div t-attf-class="o_prediction_confidence #{confidenceClass}"
+                 t-esc="confidencePercent + '%'"/>
+            <div class="o_prediction_confidence_label">Confidence Score</div>
+        </div>
+    </t>
+
+
+    <!-- ==========================================
+         Insight Card Template
+         ========================================== -->
+
+    <t t-name="optimaai.InsightCard">
+        <div t-attf-class="o_insight_card #{insightClass}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="fw-bold mb-1" t-esc="props.insight.name"/>
+                    <div class="text-muted small" t-esc="props.insight.description"/>
+                </div>
+                <span t-attf-class="o_priority_badge #{priorityClass}"
+                      t-esc="props.insight.priority"/>
+            </div>
+            <div class="mt-2 d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary o_insight_activate"
+                        t-on-click="onActivate">
+                    <i class="fa fa-check me-1"/>Activate
+                </button>
+                <button class="btn btn-sm btn-outline-secondary o_insight_dismiss"
+                        t-on-click="onDismiss">
+                    <i class="fa fa-times me-1"/>Dismiss
+                </button>
+            </div>
+        </div>
+    </t>
+
+
+    <!-- ==========================================
+         Canvas Dashboard Template
+         ========================================== -->
+
+    <t t-name="optimaai.CanvasDashboard">
+        <div class="o_canvas_container" t-att-style="gridStyle">
+            <t t-foreach="state.blocks" t-as="block" t-key="block.id">
+                <div class="o_canvas_block" t-att-style="getBlockStyle(block)">
+                    <div class="o_canvas_block_header">
+                        <span class="o_canvas_block_title">
+                            <i t-attf-class="fa #{getBlockTypeIcon(block.block_type)} me-2"/>
+                            <t t-esc="block.name"/>
+                        </span>
+                        <button class="btn btn-sm text-muted"
+                                t-on-click="() => this.removeBlock(block.id)">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                    <div class="o_canvas_block_content">
+                        <p class="text-muted text-center p-4">
+                            <i t-attf-class="fa #{getBlockTypeIcon(block.block_type)} fa-2x mb-2 d-block"/>
+                            <t t-esc="block.block_type"/> block
+                        </p>
+                    </div>
+                </div>
+            </t>
+            <t t-if="state.blocks.length === 0">
+                <div class="o_empty_state">
+                    <i class="fa fa-th-large o_empty_state_icon"/>
+                    <p class="o_empty_state_title">No blocks yet</p>
+                    <p class="o_empty_state_description">Add blocks to build your canvas</p>
+                </div>
+            </t>
+        </div>
+    </t>
+
+
+    <!-- ==========================================
+         Main Dashboard Template
+         ========================================== -->
+
+    <t t-name="optimaai.Dashboard">
+        <div class="o_optimaai_dashboard">
+            <div class="o_dashboard_header">
+                <h1>
+                    <i class="fa fa-tachometer me-2"/>
+                    OptimaAI Dashboard
+                </h1>
+            </div>
+
+            <t t-if="state.loading">
+                <div class="o_loading_overlay">
+                    <div class="o_spinner"/>
+                </div>
+            </t>
+
+            <t t-else="">
+                <!-- KPI Summary Cards -->
+                <div class="o_dashboard_kpis">
+                    <div class="o_kpi_card">
+                        <div class="o_kpi_value" t-esc="state.datasets.total"/>
+                        <div class="o_kpi_label">Datasets</div>
+                    </div>
+                    <div class="o_kpi_card">
+                        <div class="o_kpi_value" t-esc="state.predictions.total"/>
+                        <div class="o_kpi_label">Predictions</div>
+                    </div>
+                    <div class="o_kpi_card">
+                        <div class="o_kpi_value" t-esc="state.insights.total"/>
+                        <div class="o_kpi_label">Active Insights</div>
+                    </div>
+                    <div class="o_kpi_card">
+                        <div class="o_kpi_value" t-esc="state.kpis.total"/>
+                        <div class="o_kpi_label">KPIs</div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>
