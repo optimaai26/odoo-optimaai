@@ -4,6 +4,7 @@ import { Component, useState, onWillStart, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
+import { rpc } from "@web/core/network/rpc";
 
 // ==========================================
 // Notification Bell — Systray Widget
@@ -13,7 +14,7 @@ export class NotificationBell extends Component {
     static template = "optimaai.NotificationBell";
 
     setup() {
-        this.rpc = useService("rpc");
+        this.rpc = rpc;
         this.action = useService("action");
         this.state = useState({
             count: 0,
@@ -173,7 +174,7 @@ export class DatasetPreview extends Component {
     };
 
     setup() {
-        this.rpc = useService("rpc");
+        this.rpc = rpc;
         this.state = useState({
             data: this.props.data || [],
             columns: this.props.columns || [],
@@ -245,7 +246,7 @@ export class InsightCard extends Component {
     };
 
     setup() {
-        this.rpc = useService("rpc");
+        this.rpc = rpc;
     }
 
     get insightClass() {
@@ -292,7 +293,7 @@ export class CanvasDashboard extends Component {
     };
 
     setup() {
-        this.rpc = useService("rpc");
+        this.rpc = rpc;
         this.state = useState({
             blocks: this.props.blocks || [],
         });
@@ -363,7 +364,7 @@ export class OptimaAIDashboard extends Component {
     static components = { KPICard, InsightCard };
 
     setup() {
-        this.rpc = useService("rpc");
+        this.rpc = rpc;
         this.action = useService("action");
         this.state = useState({
             loading: true,

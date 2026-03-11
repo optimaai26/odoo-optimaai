@@ -9,19 +9,14 @@
         <field name="name">optimaai.notification.tree</field>
         <field name="model">optimaai.notification</field>
         <field name="arch" type="xml">
-            <tree string="Notifications" decoration-warning="priority=='high'" 
-                  decoration-danger="priority=='critical'"
+            <list string="Notifications"
                   decoration-muted="is_read==True">
-                <field name="name"/>
-                <field name="notification_type"/>
-                <field name="priority" widget="badge"
-                       decoration-info="priority=='low'"
-                       decoration-warning="priority=='high'"
-                       decoration-danger="priority=='critical'"/>
+                <field name="title"/>
+                <field name="notification_type" widget="badge"/>
                 <field name="is_read"/>
                 <field name="create_date"/>
                 <field name="user_id"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -33,51 +28,35 @@
             <form string="Notification">
                 <header>
                     <button name="action_mark_read" type="object" string="Mark as Read" 
-                            attrs="{'invisible': [('is_read', '=', True)]}"/>
+                            invisible="is_read"/>
                     <button name="action_mark_unread" type="object" string="Mark as Unread" 
-                            attrs="{'invisible': [('is_read', '=', False)]}"/>
-                    <button name="action_dismiss" type="object" string="Dismiss"/>
+                            invisible="not is_read"/>
+                    <button name="open_related" type="object" string="Open Related Record"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
-                        <h1><field name="name" placeholder="Notification Title"/></h1>
+                        <h1><field name="title" placeholder="Notification Title"/></h1>
                     </div>
                     <group>
                         <group>
                             <field name="notification_type"/>
-                            <field name="priority"/>
                             <field name="user_id"/>
                         </group>
                         <group>
                             <field name="is_read"/>
                             <field name="read_date"/>
-                            <field name="is_dismissed"/>
                         </group>
                     </group>
                     
                     <group string="Message">
-                        <field name="message" nolabel="1" widget="html"/>
+                        <field name="message" nolabel="1"/>
                     </group>
                     
                     <group string="Related Record">
-                        <field name="res_model"/>
-                        <field name="res_id"/>
-                        <field name="related_record_url"/>
+                        <field name="related_model"/>
+                        <field name="related_id"/>
+                        <field name="action"/>
                     </group>
-                    
-                    <notebook>
-                        <page string="Data" name="data">
-                            <group>
-                                <field name="data" nolabel="1" widget="text"/>
-                            </group>
-                        </page>
-                        <page string="Action" name="action">
-                            <group>
-                                <field name="action_type"/>
-                                <field name="action_config" widget="text"/>
-                            </group>
-                        </page>
-                    </notebook>
                 </sheet>
             </form>
         </field>
@@ -89,19 +68,17 @@
         <field name="model">optimaai.notification</field>
         <field name="arch" type="xml">
             <search string="Search Notifications">
-                <field name="name"/>
+                <field name="title"/>
                 <field name="user_id"/>
                 <filter name="unread" string="Unread" domain="[('is_read', '=', False)]"/>
                 <filter name="read" string="Read" domain="[('is_read', '=', True)]"/>
                 <separator/>
-                <filter name="high_priority" string="High Priority" domain="[('priority', 'in', ['high', 'critical'])]"/>
                 <filter name="info" string="Info" domain="[('notification_type', '=', 'info')]"/>
                 <filter name="warning" string="Warning" domain="[('notification_type', '=', 'warning')]"/>
                 <filter name="success" string="Success" domain="[('notification_type', '=', 'success')]"/>
                 <filter name="error" string="Error" domain="[('notification_type', '=', 'error')]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter string="Type" name="group_type" context="{'group_by': 'notification_type'}"/>
-                    <filter string="Priority" name="group_priority" context="{'group_by': 'priority'}"/>
                     <filter string="User" name="group_user" context="{'group_by': 'user_id'}"/>
                 </group>
             </search>
@@ -112,7 +89,7 @@
     <record id="action_notification_my" model="ir.actions.act_window">
         <field name="name">My Notifications</field>
         <field name="res_model">optimaai.notification</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('user_id', '=', uid)]</field>
         <field name="context">{'search_default_unread': 1}</field>
         <field name="search_view_id" ref="view_notification_search"/>
@@ -130,7 +107,7 @@
     <record id="action_notification_all" model="ir.actions.act_window">
         <field name="name">All Notifications</field>
         <field name="res_model">optimaai.notification</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_notification_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

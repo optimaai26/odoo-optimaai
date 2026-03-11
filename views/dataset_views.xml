@@ -9,19 +9,21 @@
         <field name="name">optimaai.dataset.tree</field>
         <field name="model">optimaai.dataset</field>
         <field name="arch" type="xml">
-            <tree string="Datasets" decoration-warning="status=='draft'" decoration-success="status=='validated'">
+            <list string="Datasets" decoration-warning="status=='uploading'" decoration-success="status=='ready'">
                 <field name="name"/>
-                <field name="data_source"/>
+                <field name="file_name"/>
                 <field name="row_count"/>
+                <field name="column_count"/>
+                <field name="quality_score"/>
                 <field name="status" widget="badge" 
-                       decoration-info="status=='draft'" 
+                       decoration-info="status=='uploading'" 
                        decoration-warning="status=='processing'"
-                       decoration-success="status=='validated'"
+                       decoration-success="status=='ready'"
                        decoration-danger="status=='error'"/>
                 <field name="company_id" groups="base.group_multi_company"/>
                 <field name="create_date"/>
-                <field name="created_by_id"/>
-            </tree>
+                <field name="uploaded_by"/>
+            </list>
         </field>
     </record>
     
@@ -32,77 +34,67 @@
         <field name="arch" type="xml">
             <form string="Dataset">
                 <header>
-                    <button name="action_validate" type="object" string="Validate" 
-                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'draft')]}"/>
                     <button name="action_process" type="object" string="Process" 
-                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'validated')]}"/>
-                    <button name="action_reset" type="object" string="Reset to Draft" 
-                            attrs="{'invisible': [('status', '=', 'draft')]}"/>
+                            class="btn-primary" invisible="status not in ('uploading', 'error')"/>
+                    <button name="action_archive" type="object" string="Archive"/>
                     <field name="status" widget="statusbar" 
-                           statusbar_visible="draft,validated,processed"/>
+                           statusbar_visible="uploading,processing,ready"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" type="action" name="%(action_prediction_by_dataset)d"
-                                icon="fa-magic" string="Predictions"
-                                attrs="{'invisible': [('prediction_count', '=', 0)]}">
-                            <field name="prediction_count"/>
-                        </button>
-                        <button class="oe_stat_button" type="action" name="%(action_insight_by_dataset)d"
-                                icon="fa-lightbulb-o" string="Insights"
-                                attrs="{'invisible': [('insight_count', '=', 0)]}">
-                            <field name="insight_count"/>
-                        </button>
-                    </div>
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
                         <h1><field name="name" placeholder="Dataset Name"/></h1>
                     </div>
                     <group>
                         <group>
-                            <field name="data_source"/>
-                            <field name="data_format"/>
+                            <field name="file_name"/>
+                            <field name="file_data" filename="file_name"/>
+                            <field name="file_size"/>
                             <field name="row_count"/>
-                            <field name="file_size" widget="integer"/>
+                            <field name="column_count"/>
                         </group>
                         <group>
                             <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="created_by_id"/>
-                            <field name="import_date"/>
-                            <field name="last_sync_date"/>
+                            <field name="uploaded_by"/>
+                            <field name="quality_score"/>
+                            <field name="null_percentage"/>
+                            <field name="duplicate_count"/>
+                            <field name="processed_date"/>
                         </group>
                     </group>
                     
                     <notebook>
-                        <!-- Data Preview Tab -->
-                        <page string="Data Preview" name="data_preview">
-                            <field name="data_raw" widget="optimaai_data_preview"/>
-                        </page>
-                        
                         <!-- Columns Tab -->
                         <page string="Columns" name="columns">
                             <field name="column_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="name"/>
                                     <field name="column_type"/>
-                                    <field name="required"/>
+                                    <field name="null_count"/>
+                                    <field name="null_percentage"/>
                                     <field name="unique_count"/>
-                                    <field name="missing_count"/>
                                     <field name="is_target"/>
-                                </tree>
+                                    <field name="is_feature"/>
+                                </list>
                             </field>
                         </page>
                         
-                        <!-- Configuration Tab -->
-                        <page string="Configuration" name="configuration">
+                        <!-- Description Tab -->
+                        <page string="Description" name="description">
                             <group>
-                                <field name="data_raw" widget="text"/>
+                                <field name="description" nolabel="1"/>
+                            </group>
+                            <group>
+                                <field name="tags"/>
                             </group>
                         </page>
                         
-                        <!-- Data Summary Tab -->
-                        <page string="Data Summary" name="data_summary">
-                            <field name="data_summary" widget="text"/>
+                        <!-- Error Tab -->
+                        <page string="Error Details" name="error" 
+                              invisible="status != 'error'">
+                            <group>
+                                <field name="error_message"/>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -122,14 +114,14 @@
         <field name="arch" type="xml">
             <search string="Search Datasets">
                 <field name="name"/>
-                <field name="data_source"/>
-                <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
-                <filter name="validated" string="Validated" domain="[('status', '=', 'validated')]"/>
-                <filter name="processed" string="Processed" domain="[('status', '=', 'processed')]"/>
-                <group expand="0" string="Group By">
+                <field name="file_name"/>
+                <filter name="uploading" string="Uploading" domain="[('status', '=', 'uploading')]"/>
+                <filter name="processing" string="Processing" domain="[('status', '=', 'processing')]"/>
+                <filter name="ready" string="Ready" domain="[('status', '=', 'ready')]"/>
+                <filter name="error" string="Error" domain="[('status', '=', 'error')]"/>
+                <group>
                     <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
-                    <filter string="Data Source" name="group_source" context="{'group_by': 'data_source'}"/>
-                    <filter string="Created By" name="group_created" context="{'group_by': 'created_by_id'}"/>
+                    <filter string="Uploaded By" name="group_uploaded" context="{'group_by': 'uploaded_by'}"/>
                 </group>
             </search>
         </field>
@@ -145,7 +137,7 @@
                 <field name="name"/>
                 <field name="status"/>
                 <field name="row_count"/>
-                <field name="data_source"/>
+                <field name="file_name"/>
                 <field name="create_date"/>
                 <templates>
                     <t t-name="kanban-box">
@@ -153,7 +145,7 @@
                             <div class="oe_kanban_content">
                                 <strong><field name="name"/></strong>
                                 <div class="text-muted">
-                                    <i class="fa fa-database"/> <field name="data_source"/>
+                                    <i class="fa fa-file"/> <field name="file_name"/>
                                 </div>
                                 <div>
                                     <i class="fa fa-table"/> <field name="row_count"/> rows
@@ -161,8 +153,8 @@
                             </div>
                             <div class="oe_kanban_bottom_right">
                                 <field name="status" widget="label" 
-                                       decoration-info="status=='draft'"
-                                       decoration-success="status=='validated'"
+                                       decoration-info="status=='uploading'"
+                                       decoration-success="status=='ready'"
                                        decoration-warning="status=='processing'"/>
                             </div>
                         </div>
@@ -176,7 +168,7 @@
     <record id="action_dataset" model="ir.actions.act_window">
         <field name="name">Datasets</field>
         <field name="res_model">optimaai.dataset</field>
-        <field name="view_mode">tree,form,kanban</field>
+        <field name="view_mode">list,form,kanban</field>
         <field name="search_view_id" ref="view_dataset_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -193,15 +185,16 @@
         <field name="name">optimaai.dataset.column.tree</field>
         <field name="model">optimaai.dataset.column</field>
         <field name="arch" type="xml">
-            <tree string="Dataset Columns">
+            <list string="Dataset Columns">
                 <field name="dataset_id"/>
                 <field name="name"/>
                 <field name="column_type"/>
-                <field name="required"/>
                 <field name="is_target"/>
+                <field name="is_feature"/>
                 <field name="unique_count"/>
-                <field name="missing_count"/>
-            </tree>
+                <field name="null_count"/>
+                <field name="null_percentage"/>
+            </list>
         </field>
     </record>
     

@@ -4,7 +4,7 @@ Security Mixin Classes
 ======================
 Provides permission check helpers similar to hasPermission() hook.
 """
-from odoo import models, api, _
+from odoo import models, fields, api, _
 from odoo.exceptions import AccessError
 
 

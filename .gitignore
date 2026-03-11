@@ -21,3 +21,7 @@ desktop.ini
 
 # Odoo
 *.pyc
+
+# Docker
+.env
+config/odoo.conf

@@ -49,8 +49,7 @@
         # Website pages
         'data/pages/dashboard.xml',
         
-        # Views
-        'views/menu_views.xml',
+        # Views (menu_views.xml MUST be last — it references actions from the other files)
         'views/dataset_views.xml',
         'views/prediction_views.xml',
         'views/insight_views.xml',
@@ -58,6 +57,7 @@
         'views/canvas_views.xml',
         'views/kpi_views.xml',
         'views/notification_views.xml',
+        'views/menu_views.xml',
     ],
     
     # Demo data (only loaded in demo mode)
@@ -75,11 +75,11 @@
         ],
         # Website theme: Primary variables (loaded BEFORE Bootstrap)
         'web._assets_primary_variables': [
-            ('prepend', 'optimaai/static/src/scss/primary_variables.scss'),
+            'optimaai/static/src/scss/primary_variables.scss',
         ],
         # Website theme: Bootstrap overrides (loaded AFTER primary vars, BEFORE Bootstrap)
         'web._assets_frontend_helpers': [
-            ('prepend', 'optimaai/static/src/scss/bootstrap_overridden.scss'),
+            'optimaai/static/src/scss/bootstrap_overridden.scss',
         ],
         # Website frontend assets (public-facing pages)
         'web.assets_frontend': [

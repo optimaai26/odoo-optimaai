@@ -12,7 +12,6 @@
     <!-- Base User Group -->
     <record id="group_optimaai_user" model="res.groups">
         <field name="name">OptimaAI User</field>
-        <field name="category_id" ref="base.module_category_tools"/>
         <field name="comment">Basic access to OptimaAI features</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
@@ -20,7 +19,6 @@
     <!-- Analyst Group -->
     <record id="group_optimaai_analyst" model="res.groups">
         <field name="name">OptimaAI Analyst</field>
-        <field name="category_id" ref="base.module_category_tools"/>
         <field name="comment">Can create datasets, predictions, and insights</field>
         <field name="implied_ids" eval="[(4, ref('group_optimaai_user'))]"/>
     </record>
@@ -28,79 +26,59 @@
     <!-- Manager Group -->
     <record id="group_optimaai_admin" model="res.groups">
         <field name="name">OptimaAI Administrator</field>
-        <field name="category_id" ref="base.module_category_tools"/>
         <field name="comment">Full access to all OptimaAI features</field>
         <field name="implied_ids" eval="[(4, ref('group_optimaai_analyst'))]"/>
     </record>
     
+    <!-- Give Admin users the OptimaAI Administrator group by default -->
+    <record id="base.user_admin" model="res.users">
+        <field name="groups_id" eval="[(4, ref('optimaai.group_optimaai_admin'))]"/>
+    </record>
+    <record id="base.user_root" model="res.users">
+        <field name="groups_id" eval="[(4, ref('optimaai.group_optimaai_admin'))]"/>
+    </record>
+    
     <!-- ==========================================
-         Multi-Company Rules
-         ========================================== -->
+         Record Rules
+         ==========================================
+         
+         Note: Most models do not have company_id,
+         so we use simple group-based access rules
+         instead of multi-company domain filters.
+    -->
     
-    <!-- Dataset Company Rule -->
-    <record id="rule_dataset_company" model="ir.rule">
-        <field name="name">OptimaAI Dataset: Company</field>
-        <field name="model_id" ref="model_optimaai_dataset"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    <!-- Canvas: Owner or public canvases -->
+    <record id="rule_canvas_user" model="ir.rule">
+        <field name="name">OptimaAI Canvas: User Access</field>
+        <field name="model_id" ref="model_optimaai_canvas"/>
+        <field name="domain_force">['|', ('created_by', '=', user.id), ('created_by', '!=', False)]</field>
+        <field name="groups" eval="[(4, ref('group_optimaai_user'))]"/>
     </record>
     
-    <!-- Prediction Company Rule -->
-    <record id="rule_prediction_company" model="ir.rule">
-        <field name="name">OptimaAI Prediction: Company</field>
-        <field name="model_id" ref="model_optimaai_prediction"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-    </record>
-    
-    <!-- Insight Company Rule -->
-    <record id="rule_insight_company" model="ir.rule">
-        <field name="name">OptimaAI Insight: Company</field>
-        <field name="model_id" ref="model_optimaai_insight"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-    </record>
-    
-    <!-- Report Company Rule -->
-    <record id="rule_report_company" model="ir.rule">
-        <field name="name">OptimaAI Report: Company</field>
-        <field name="model_id" ref="model_optimaai_report"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-    </record>
-    
-    <!-- Canvas Company Rule -->
+    <!-- Canvas: Company rule (canvas has company_id) -->
     <record id="rule_canvas_company" model="ir.rule">
         <field name="name">OptimaAI Canvas: Company</field>
         <field name="model_id" ref="model_optimaai_canvas"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
     
-    <!-- KPI Company Rule -->
-    <record id="rule_kpi_company" model="ir.rule">
-        <field name="name">OptimaAI KPI: Company</field>
-        <field name="model_id" ref="model_optimaai_kpi"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    <!-- Canvas Block: Follow canvas access -->
+    <record id="rule_canvas_block_user" model="ir.rule">
+        <field name="name">OptimaAI Canvas Block: User Access</field>
+        <field name="model_id" ref="model_optimaai_canvas_block"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_optimaai_user'))]"/>
     </record>
     
-    <!-- Integration Config Company Rule -->
-    <record id="rule_integration_company" model="ir.rule">
-        <field name="name">OptimaAI Integration: Company</field>
-        <field name="model_id" ref="model_optimaai_integration_config"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    <!-- Canvas Connection: Company rule (has related company_id) -->
+    <record id="rule_canvas_connection_company" model="ir.rule">
+        <field name="name">OptimaAI Canvas Connection: Company</field>
+        <field name="model_id" ref="model_optimaai_canvas_connection"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
-    
-    <!-- Access Request Company Rule -->
-    <record id="rule_access_request_company" model="ir.rule">
-        <field name="name">OptimaAI Access Request: Company</field>
-        <field name="model_id" ref="model_optimaai_access_request"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-    </record>
-    
+
     <!-- ==========================================
          Owner Rules (Users see their own records)
          ========================================== -->
@@ -129,34 +107,6 @@
         <field name="perm_unlink" eval="True"/>
     </record>
     
-    <!-- Access Request: User sees own requests -->
-    <record id="rule_access_request_user" model="ir.rule">
-        <field name="name">OptimaAI Access Request: Own Requests</field>
-        <field name="model_id" ref="model_optimaai_access_request"/>
-        <field name="domain_force">['|', ('requester_id', '=', user.id), ('approver_id', '=', user.id)]</field>
-        <field name="groups" eval="[(4, ref('group_optimaai_user'))]"/>
-    </record>
-    
-    <!-- ==========================================
-         Canvas Access Rules
-         ========================================== -->
-    
-    <!-- Canvas: Owner or team member -->
-    <record id="rule_canvas_user" model="ir.rule">
-        <field name="name">OptimaAI Canvas: User Access</field>
-        <field name="model_id" ref="model_optimaai_canvas"/>
-        <field name="domain_force">['|', ('user_id', '=', user.id), ('access_level', '!=', 'private')]</field>
-        <field name="groups" eval="[(4, ref('group_optimaai_user'))]"/>
-    </record>
-    
-    <!-- Canvas Block: Follow canvas access -->
-    <record id="rule_canvas_block_user" model="ir.rule">
-        <field name="name">OptimaAI Canvas Block: User Access</field>
-        <field name="model_id" ref="model_optimaai_canvas_block"/>
-        <field name="domain_force">[('canvas_id.access_level', '!=', 'private')]</field>
-        <field name="groups" eval="[(4, ref('group_optimaai_user'))]"/>
-    </record>
-    
     <!-- ==========================================
          Integration Access Rules
          ========================================== -->
@@ -167,46 +117,5 @@
         <field name="model_id" ref="model_optimaai_integration_config"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups" eval="[(4, ref('group_optimaai_admin'))]"/>
-    </record>
-    
-    <!-- ==========================================
-         Menu Access
-         ========================================== -->
-    
-    <!-- Assign menu to groups -->
-    <record id="menu_optimaai" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_user'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_dashboard" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_user'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_datasets" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_analyst'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_predictions" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_analyst'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_insights" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_user'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_reports" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_analyst'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_canvases" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_analyst'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_integrations" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_admin'))]"/>
-    </record>
-    
-    <record id="menu_optimaai_settings" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('group_optimaai_admin'))]"/>
     </record>
 </odoo>

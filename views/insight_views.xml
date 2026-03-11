@@ -9,19 +9,20 @@
         <field name="name">optimaai.insight.tree</field>
         <field name="model">optimaai.insight</field>
         <field name="arch" type="xml">
-            <tree string="Insights" decoration-danger="priority=='high'" 
-                  decoration-warning="priority=='medium'" decoration-muted="status=='archived'">
+            <list string="Insights" decoration-danger="priority=='critical'" 
+                  decoration-warning="priority=='high'">
                 <field name="name"/>
                 <field name="insight_type"/>
                 <field name="dataset_id"/>
                 <field name="priority" widget="badge" 
-                       decoration-danger="priority=='high'"
-                       decoration-warning="priority=='medium'"
+                       decoration-danger="priority=='critical'"
+                       decoration-warning="priority=='high'"
                        decoration-info="priority=='low'"/>
-                <field name="status" widget="badge"/>
+                <field name="action_status" widget="badge"/>
+                <field name="impact_score"/>
                 <field name="create_date"/>
                 <field name="company_id" groups="base.group_multi_company"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -33,23 +34,17 @@
             <form string="Insight">
                 <header>
                     <button name="action_acknowledge" type="object" string="Acknowledge" 
-                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'active')]}"/>
+                            class="btn-primary" invisible="action_status != 'pending'"/>
+                    <button name="action_start" type="object" string="Start Work" 
+                            invisible="action_status != 'acknowledged'"/>
                     <button name="action_resolve" type="object" string="Resolve" 
-                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'acknowledged')]}"/>
-                    <button name="action_archive" type="object" string="Archive" 
-                            attrs="{'invisible': [('status', '!=', 'resolved')]}"/>
-                    <button name="action_reactivate" type="object" string="Reactivate" 
-                            attrs="{'invisible': [('status', '!=', 'archived')]}"/>
-                    <field name="status" widget="statusbar" 
-                           statusbar_visible="active,acknowledged,resolved,archived"/>
+                            class="btn-primary" invisible="action_status != 'in_progress'"/>
+                    <button name="action_dismiss" type="object" string="Dismiss" 
+                            invisible="action_status in ('resolved', 'dismissed')"/>
+                    <field name="action_status" widget="statusbar" 
+                           statusbar_visible="pending,acknowledged,in_progress,resolved"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" type="action" name="%(action_prediction_by_insight)d"
-                                icon="fa-magic" string="Prediction"
-                                attrs="{'invisible': [('prediction_id', '=', False)]}">
-                        </button>
-                    </div>
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
                         <h1><field name="name" placeholder="Insight Title"/></h1>
@@ -58,33 +53,41 @@
                         <group>
                             <field name="insight_type"/>
                             <field name="priority"/>
+                            <field name="impact_score"/>
+                            <field name="confidence_level"/>
                             <field name="dataset_id"/>
                             <field name="prediction_id"/>
                         </group>
                         <group>
-                            <field name="status"/>
-                            <field name="acknowledged_date"/>
+                            <field name="action_status"/>
+                            <field name="is_actionable"/>
+                            <field name="action_assigned_to"/>
                             <field name="resolved_date"/>
+                            <field name="resolved_by"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     
-                    <group string="Description">
-                        <field name="description" nolabel="1" widget="html"/>
+                    <group string="Summary">
+                        <field name="summary" nolabel="1"/>
                     </group>
                     
                     <notebook>
                         <!-- Details Tab -->
                         <page string="Details" name="details">
                             <group>
-                                <field name="insight_data" widget="text"/>
+                                <field name="detailed_analysis"/>
+                            </group>
+                            <group>
+                                <field name="supporting_data" widget="text"/>
                             </group>
                         </page>
                         
-                        <!-- Recommendations Tab -->
-                        <page string="Recommendations" name="recommendations">
+                        <!-- Action Tab -->
+                        <page string="Action" name="action">
                             <group>
-                                <field name="recommendations" nolabel="1" widget="html"/>
+                                <field name="action_suggestion"/>
+                                <field name="action_notes"/>
                             </group>
                         </page>
                     </notebook>
@@ -106,16 +109,17 @@
             <search string="Search Insights">
                 <field name="name"/>
                 <field name="dataset_id"/>
-                <filter name="active" string="Active" domain="[('status', '=', 'active')]"/>
-                <filter name="acknowledged" string="Acknowledged" domain="[('status', '=', 'acknowledged')]"/>
-                <filter name="resolved" string="Resolved" domain="[('status', '=', 'resolved')]"/>
+                <filter name="pending" string="Pending" domain="[('action_status', '=', 'pending')]"/>
+                <filter name="in_progress" string="In Progress" domain="[('action_status', '=', 'in_progress')]"/>
+                <filter name="resolved" string="Resolved" domain="[('action_status', '=', 'resolved')]"/>
                 <separator/>
+                <filter name="critical" string="Critical" domain="[('priority', '=', 'critical')]"/>
                 <filter name="high_priority" string="High Priority" domain="[('priority', '=', 'high')]"/>
                 <filter name="trend" string="Trends" domain="[('insight_type', '=', 'trend')]"/>
                 <filter name="anomaly" string="Anomalies" domain="[('insight_type', '=', 'anomaly')]"/>
                 <filter name="pattern" string="Patterns" domain="[('insight_type', '=', 'pattern')]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                <group>
+                    <filter string="Action Status" name="group_status" context="{'group_by': 'action_status'}"/>
                     <filter string="Priority" name="group_priority" context="{'group_by': 'priority'}"/>
                     <filter string="Type" name="group_type" context="{'group_by': 'insight_type'}"/>
                     <filter string="Dataset" name="group_dataset" context="{'group_by': 'dataset_id'}"/>
@@ -129,10 +133,10 @@
         <field name="name">optimaai.insight.kanban</field>
         <field name="model">optimaai.insight</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="status" class="o_kanban_small_column">
+            <kanban default_group_by="action_status" class="o_kanban_small_column">
                 <field name="id"/>
                 <field name="name"/>
-                <field name="status"/>
+                <field name="action_status"/>
                 <field name="priority"/>
                 <field name="insight_type"/>
                 <field name="dataset_id"/>
@@ -143,7 +147,6 @@
                             <div class="oe_kanban_content">
                                 <div class="o_kanban_record_top">
                                     <strong class="o_kanban_record_title"><field name="name"/></strong>
-                                    <field name="priority" widget="priority"/>
                                 </div>
                                 <div class="text-muted">
                                     <i class="fa fa-lightbulb-o"/> <field name="insight_type"/>
@@ -153,11 +156,10 @@
                                 </div>
                             </div>
                             <div class="oe_kanban_bottom_right">
-                                <field name="status" widget="label"
-                                       decoration-info="status=='active'"
-                                       decoration-warning="status=='acknowledged'"
-                                       decoration-success="status=='resolved'"
-                                       decoration-muted="status=='archived'"/>
+                                <field name="priority" widget="label"
+                                       decoration-danger="priority=='critical'"
+                                       decoration-warning="priority=='high'"
+                                       decoration-info="priority=='low'"/>
                             </div>
                         </div>
                     </t>
@@ -170,9 +172,9 @@
     <record id="action_insight" model="ir.actions.act_window">
         <field name="name">Insights</field>
         <field name="res_model">optimaai.insight</field>
-        <field name="view_mode">tree,form,kanban</field>
+        <field name="view_mode">list,form,kanban</field>
         <field name="search_view_id" ref="view_insight_search"/>
-        <field name="context">{'search_default_active': 1}</field>
+        <field name="context">{'search_default_pending': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No insights found
@@ -187,17 +189,16 @@
     <record id="action_insight_by_dataset" model="ir.actions.act_window">
         <field name="name">Insights</field>
         <field name="res_model">optimaai.insight</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('dataset_id', '=', active_id)]</field>
         <field name="context">{'default_dataset_id': active_id}</field>
     </record>
     
-    <!-- Insight Action by Prediction -->
+    <!-- Prediction Action by Insight -->
     <record id="action_prediction_by_insight" model="ir.actions.act_window">
         <field name="name">Prediction</field>
         <field name="res_model">optimaai.prediction</field>
         <field name="view_mode">form</field>
-        <field name="domain">[('id', '=', prediction_id)]</field>
         <field name="target">current</field>
     </record>
     

@@ -31,6 +31,11 @@ class Canvas(models.Model):
         string='Description'
     )
     
+    config = fields.Text(
+        string='Configuration',
+        help='JSON configuration for the canvas.'
+    )
+    
     # Canvas configuration
     canvas_type = fields.Selection([
         ('prediction', 'Prediction Workflow'),

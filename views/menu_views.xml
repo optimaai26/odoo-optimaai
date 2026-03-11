@@ -4,6 +4,219 @@
          Main Menu Structure
          ========================================== -->
     
+    <!-- Dashboard Action (must be defined before menuitem that references it) -->
+    <record id="action_dashboard" model="ir.actions.client">
+        <field name="name">Dashboard</field>
+        <field name="tag">optimaai_dashboard</field>
+        <field name="target">current</field>
+    </record>
+    
+    <!-- ==========================================
+         Access Request Views and Action
+         ========================================== -->
+    
+    <record id="view_access_request_tree" model="ir.ui.view">
+        <field name="name">optimaai.access.request.tree</field>
+        <field name="model">optimaai.access.request</field>
+        <field name="arch" type="xml">
+            <list string="Access Requests" decoration-warning="status=='pending'"
+                  decoration-success="status=='approved'" decoration-danger="status=='rejected'">
+                <field name="name"/>
+                <field name="requester_id"/>
+                <field name="access_type"/>
+                <field name="resource_model"/>
+                <field name="status" widget="badge"/>
+                <field name="create_date"/>
+                <field name="approval_date"/>
+            </list>
+        </field>
+    </record>
+    
+    <record id="view_access_request_form" model="ir.ui.view">
+        <field name="name">optimaai.access.request.form</field>
+        <field name="model">optimaai.access.request</field>
+        <field name="arch" type="xml">
+            <form string="Access Request">
+                <header>
+                    <button name="action_approve" type="object" string="Approve" 
+                            class="btn-primary" invisible="status != 'pending'"/>
+                    <button name="action_reject" type="object" string="Reject" 
+                            invisible="status != 'pending'"/>
+                    <button name="action_cancel" type="object" string="Cancel" 
+                            invisible="status != 'pending'"/>
+                    <field name="status" widget="statusbar" statusbar_visible="pending,approved,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Request Subject"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="requester_id"/>
+                            <field name="access_type"/>
+                            <field name="resource_model"/>
+                            <field name="resource_id"/>
+                            <field name="resource_ref"/>
+                            <field name="duration_days"/>
+                        </group>
+                        <group>
+                            <field name="status"/>
+                            <field name="approver_id"/>
+                            <field name="approval_date"/>
+                            <field name="expiry_date"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Reason">
+                        <field name="reason" nolabel="1"/>
+                    </group>
+                    <group string="Justification">
+                        <field name="justification" nolabel="1" widget="text"/>
+                    </group>
+                    <group string="Rejection Reason" invisible="status != 'rejected'">
+                        <field name="rejection_reason" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="view_access_request_search" model="ir.ui.view">
+        <field name="name">optimaai.access.request.search</field>
+        <field name="model">optimaai.access.request</field>
+        <field name="arch" type="xml">
+            <search string="Search Access Requests">
+                <field name="name"/>
+                <field name="requester_id"/>
+                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
+                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
+                <group>
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Access Type" name="group_type" context="{'group_by': 'access_type'}"/>
+                    <filter string="Requester" name="group_user" context="{'group_by': 'requester_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <record id="action_access_request" model="ir.actions.act_window">
+        <field name="name">Access Requests</field>
+        <field name="res_model">optimaai.access.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_access_request_search"/>
+        <field name="context">{'search_default_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No access requests
+            </p>
+            <p>
+                Access requests for restricted features will appear here.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ==========================================
+         Integration Config Views and Action
+         ========================================== -->
+    
+    <record id="view_integration_config_tree" model="ir.ui.view">
+        <field name="name">optimaai.integration.config.tree</field>
+        <field name="model">optimaai.integration.config</field>
+        <field name="arch" type="xml">
+            <list string="Integrations">
+                <field name="name"/>
+                <field name="integration_type"/>
+                <field name="provider"/>
+                <field name="auth_type"/>
+                <field name="base_url"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+    
+    <record id="view_integration_config_form" model="ir.ui.view">
+        <field name="name">optimaai.integration.config.form</field>
+        <field name="model">optimaai.integration.config</field>
+        <field name="arch" type="xml">
+            <form string="Integration">
+                <header>
+                    <button name="action_test_connection" type="object" string="Test Connection" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Integration Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="integration_type"/>
+                            <field name="provider"/>
+                        </group>
+                        <group>
+                            <field name="base_url"/>
+                            <field name="api_version"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Authentication" name="auth">
+                            <group>
+                                <field name="auth_type"/>
+                            </group>
+                            <group invisible="auth_type != 'api_key'">
+                                <field name="api_key_header"/>
+                                <field name="api_key_id"/>
+                            </group>
+                            <group invisible="auth_type != 'bearer'">
+                                <field name="bearer_token" password="True"/>
+                            </group>
+                            <group invisible="auth_type != 'basic'">
+                                <field name="username"/>
+                                <field name="password" password="True"/>
+                            </group>
+                            <group invisible="auth_type != 'oauth2'">
+                                <field name="oauth_client_id"/>
+                                <field name="oauth_client_secret" password="True"/>
+                                <field name="oauth_token_url"/>
+                                <field name="oauth_scope"/>
+                            </group>
+                            <group invisible="auth_type != 'custom'">
+                                <field name="custom_headers" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Settings" name="settings">
+                            <group>
+                                <field name="timeout"/>
+                                <field name="retry_count"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <record id="action_integration_config" model="ir.actions.act_window">
+        <field name="name">Integrations</field>
+        <field name="res_model">optimaai.integration.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No integrations configured
+            </p>
+            <p>
+                Configure external service integrations here.
+            </p>
+        </field>
+    </record>
+    
     <!-- Main Menu -->
     <menuitem id="menu_optimaai_root" 
               name="OptimaAI" 
@@ -99,181 +312,8 @@
     <!-- User Notifications Menu (in user preferences area) -->
     <menuitem id="menu_optimaai_my_notifications" 
               name="My Notifications" 
-              parent="base.menu_base_partner"
+              parent="menu_optimaai_root"
               action="action_notification_my"
               sequence="100"/>
-    
-    <!-- ==========================================
-         Dashboard Action (Placeholder)
-         ========================================== -->
-    
-    <record id="action_dashboard" model="ir.actions.client">
-        <field name="name">Dashboard</field>
-        <field name="tag">optimaai_dashboard</field>
-        <field name="target">current</field>
-    </record>
-    
-    <!-- ==========================================
-         Access Request Action
-         ========================================== -->
-    
-    <record id="view_access_request_tree" model="ir.ui.view">
-        <field name="name">optimaai.access.request.tree</field>
-        <field name="model">optimaai.access.request</field>
-        <field name="arch" type="xml">
-            <tree string="Access Requests" decoration-warning="status=='pending'"
-                  decoration-success="status=='approved'" decoration-danger="status=='rejected'">
-                <field name="name"/>
-                <field name="user_id"/>
-                <field name="request_type"/>
-                <field name="status" widget="badge"/>
-                <field name="create_date"/>
-                <field name="approved_date"/>
-            </tree>
-        </field>
-    </record>
-    
-    <record id="view_access_request_form" model="ir.ui.view">
-        <field name="name">optimaai.access.request.form</field>
-        <field name="model">optimaai.access.request</field>
-        <field name="arch" type="xml">
-            <form string="Access Request">
-                <header>
-                    <button name="action_approve" type="object" string="Approve" 
-                            class="btn-primary" attrs="{'invisible': [('status', '!=', 'pending')]}"/>
-                    <button name="action_reject" type="object" string="Reject" 
-                            attrs="{'invisible': [('status', '!=', 'pending')]}"/>
-                    <button name="action_cancel" type="object" string="Cancel" 
-                            attrs="{'invisible': [('status', '!=', 'pending')]}"/>
-                    <field name="status" widget="statusbar" statusbar_visible="pending,approved,rejected"/>
-                </header>
-                <sheet>
-                    <div class="oe_title">
-                        <h1><field name="name" placeholder="Request Title"/></h1>
-                    </div>
-                    <group>
-                        <group>
-                            <field name="user_id"/>
-                            <field name="request_type"/>
-                            <field name="requested_model"/>
-                        </group>
-                        <group>
-                            <field name="status"/>
-                            <field name="approved_by_id"/>
-                            <field name="approved_date"/>
-                        </group>
-                    </group>
-                    <group string="Justification">
-                        <field name="justification" nolabel="1" widget="text"/>
-                    </group>
-                    <group string="Rejection Reason" attrs="{'invisible': [('status', '!=', 'rejected')]}">
-                        <field name="rejection_reason" nolabel="1"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-    
-    <record id="view_access_request_search" model="ir.ui.view">
-        <field name="name">optimaai.access.request.search</field>
-        <field name="model">optimaai.access.request</field>
-        <field name="arch" type="xml">
-            <search string="Search Access Requests">
-                <field name="name"/>
-                <field name="user_id"/>
-                <filter name="pending" string="Pending" domain="[('status', '=', 'pending')]"/>
-                <filter name="approved" string="Approved" domain="[('status', '=', 'approved')]"/>
-                <filter name="rejected" string="Rejected" domain="[('status', '=', 'rejected')]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
-                    <filter string="Type" name="group_type" context="{'group_by': 'request_type'}"/>
-                    <filter string="User" name="group_user" context="{'group_by': 'user_id'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-    
-    <record id="action_access_request" model="ir.actions.act_window">
-        <field name="name">Access Requests</field>
-        <field name="res_model">optimaai.access.request</field>
-        <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="view_access_request_search"/>
-        <field name="context">{'search_default_pending': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No access requests
-            </p>
-            <p>
-                Access requests for restricted features will appear here.
-            </p>
-        </field>
-    </record>
-    
-    <!-- ==========================================
-         Integration Config Action
-         ========================================== -->
-    
-    <record id="view_integration_config_tree" model="ir.ui.view">
-        <field name="name">optimaai.integration.config.tree</field>
-        <field name="model">optimaai.integration.config</field>
-        <field name="arch" type="xml">
-            <tree string="Integrations" decoration-muted="active==False">
-                <field name="name"/>
-                <field name="provider"/>
-                <field name="active" widget="toggle"/>
-                <field name="company_id" groups="base.group_multi_company"/>
-            </tree>
-        </field>
-    </record>
-    
-    <record id="view_integration_config_form" model="ir.ui.view">
-        <field name="name">optimaai.integration.config.form</field>
-        <field name="model">optimaai.integration.config</field>
-        <field name="arch" type="xml">
-            <form string="Integration">
-                <sheet>
-                    <div class="oe_title">
-                        <label for="name" class="oe_edit_only"/>
-                        <h1><field name="name" placeholder="Integration Name"/></h1>
-                    </div>
-                    <group>
-                        <group>
-                            <field name="provider"/>
-                            <field name="active"/>
-                        </group>
-                        <group>
-                            <field name="company_id" groups="base.group_multi_company"/>
-                        </group>
-                    </group>
-                    <notebook>
-                        <page string="Configuration" name="configuration">
-                            <group>
-                                <field name="config" nolabel="1" widget="text"/>
-                            </group>
-                        </page>
-                        <page string="Credentials" name="credentials">
-                            <group>
-                                <field name="credentials" nolabel="1" widget="text"/>
-                            </group>
-                        </page>
-                    </notebook>
-                </sheet>
-            </form>
-        </field>
-    </record>
-    
-    <record id="action_integration_config" model="ir.actions.act_window">
-        <field name="name">Integrations</field>
-        <field name="res_model">optimaai.integration.config</field>
-        <field name="view_mode">tree,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No integrations configured
-            </p>
-            <p>
-                Configure external service integrations here.
-            </p>
-        </field>
-    </record>
     
 </odoo>

@@ -9,15 +9,18 @@
         <field name="name">optimaai.report.tree</field>
         <field name="model">optimaai.report</field>
         <field name="arch" type="xml">
-            <tree string="Reports" decoration-warning="status=='draft'" 
-                  decoration-success="status=='published'">
+            <list string="Reports" decoration-warning="status=='draft'" 
+                  decoration-success="status=='completed'"
+                  decoration-danger="status=='failed'">
                 <field name="name"/>
                 <field name="report_type"/>
+                <field name="format"/>
                 <field name="status" widget="badge"/>
                 <field name="schedule_type"/>
                 <field name="next_run_date"/>
+                <field name="last_run_date"/>
                 <field name="company_id" groups="base.group_multi_company"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -30,12 +33,11 @@
                 <header>
                     <button name="action_generate" type="object" string="Generate Now" 
                             class="btn-primary"/>
-                    <button name="action_publish" type="object" string="Publish" 
-                            attrs="{'invisible': [('status', '!=', 'draft')]}"/>
-                    <button name="action_unpublish" type="object" string="Unpublish" 
-                            attrs="{'invisible': [('status', '!=', 'published')]}"/>
-                    <button name="action_duplicate" type="object" string="Duplicate"/>
-                    <field name="status" widget="statusbar" statusbar_visible="draft,published,archived"/>
+                    <button name="action_download" type="object" string="Download" 
+                            invisible="status != 'completed'"/>
+                    <button name="action_preview" type="object" string="Preview" 
+                            invisible="status != 'completed'"/>
+                    <field name="status" widget="statusbar" statusbar_visible="draft,pending,generating,completed"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -45,47 +47,53 @@
                     <group>
                         <group>
                             <field name="report_type"/>
+                            <field name="format"/>
                             <field name="schedule_type"/>
-                            <field name="next_run_date" attrs="{'invisible': [('schedule_type', '=', 'manual')]}"/>
+                            <field name="schedule_time" invisible="schedule_type == 'manual'"/>
+                            <field name="schedule_day" invisible="schedule_type in ('manual', 'daily')"/>
+                            <field name="next_run_date" invisible="schedule_type == 'manual'"/>
                         </group>
                         <group>
                             <field name="status"/>
                             <field name="last_run_date"/>
+                            <field name="created_by"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     
                     <notebook>
-                        <!-- Content Tab -->
-                        <page string="Content" name="content">
-                            <group>
-                                <field name="description"/>
-                            </group>
-                            <group string="Report Content">
-                                <field name="content" nolabel="1" widget="html"/>
-                            </group>
-                        </page>
-                        
                         <!-- Data Sources Tab -->
                         <page string="Data Sources" name="data_sources">
                             <group>
                                 <field name="dataset_ids" widget="many2many_tags"/>
                                 <field name="prediction_ids" widget="many2many_tags"/>
                                 <field name="insight_ids" widget="many2many_tags"/>
+                                <field name="kpi_ids" widget="many2many_tags"/>
                             </group>
                         </page>
                         
-                        <!-- Filters Tab -->
-                        <page string="Filters" name="filters">
+                        <!-- Recipients Tab -->
+                        <page string="Recipients" name="recipients">
                             <group>
-                                <field name="filter_config" widget="text"/>
+                                <field name="recipient_user_ids" widget="many2many_tags"/>
+                                <field name="recipient_emails"/>
                             </group>
                         </page>
                         
-                        <!-- Layout Tab -->
-                        <page string="Layout" name="layout">
+                        <!-- Output Tab -->
+                        <page string="Output" name="output"
+                              invisible="status != 'completed'">
                             <group>
-                                <field name="layout_config" widget="text"/>
+                                <field name="file_name"/>
+                                <field name="file_data" filename="file_name"/>
+                            </group>
+                        </page>
+                        
+                        <!-- Error Tab -->
+                        <page string="Error Details" name="error" 
+                              invisible="status != 'failed'">
+                            <group>
+                                <field name="error_message"/>
                             </group>
                         </page>
                     </notebook>
@@ -107,11 +115,11 @@
             <search string="Search Reports">
                 <field name="name"/>
                 <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
-                <filter name="published" string="Published" domain="[('status', '=', 'published')]"/>
-                <filter name="archived" string="Archived" domain="[('status', '=', 'archived')]"/>
+                <filter name="completed" string="Completed" domain="[('status', '=', 'completed')]"/>
+                <filter name="failed" string="Failed" domain="[('status', '=', 'failed')]"/>
                 <separator/>
                 <filter name="scheduled" string="Scheduled" domain="[('schedule_type', '!=', 'manual')]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
                     <filter string="Type" name="group_type" context="{'group_by': 'report_type'}"/>
                     <filter string="Schedule" name="group_schedule" context="{'group_by': 'schedule_type'}"/>
@@ -124,7 +132,7 @@
     <record id="action_report" model="ir.actions.act_window">
         <field name="name">Reports</field>
         <field name="res_model">optimaai.report</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_report_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
