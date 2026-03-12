@@ -9,20 +9,27 @@
         <field name="name">optimaai.dataset.tree</field>
         <field name="model">optimaai.dataset</field>
         <field name="arch" type="xml">
-            <list string="Datasets" decoration-warning="status=='uploading'" decoration-success="status=='ready'">
-                <field name="name"/>
-                <field name="file_name"/>
-                <field name="row_count"/>
-                <field name="column_count"/>
-                <field name="quality_score"/>
+            <list string="Datasets" 
+                  decoration-warning="status=='uploading'" 
+                  decoration-success="status=='ready'"
+                  decoration-danger="status=='error'"
+                  multi_edit="1"
+                  sample="1">
+                <field name="name" string="Dataset"/>
+                <field name="file_name" optional="show"/>
+                <field name="row_count" string="Rows" optional="show"/>
+                <field name="column_count" string="Cols" optional="show"/>
+                <field name="quality_score" widget="progressbar" optional="show"/>
                 <field name="status" widget="badge" 
                        decoration-info="status=='uploading'" 
                        decoration-warning="status=='processing'"
                        decoration-success="status=='ready'"
                        decoration-danger="status=='error'"/>
-                <field name="company_id" groups="base.group_multi_company"/>
-                <field name="create_date"/>
-                <field name="uploaded_by"/>
+                <field name="uploaded_by" widget="many2one_avatar_user"/>
+                <field name="file_size" optional="hide"/>
+                <field name="null_percentage" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="create_date" string="Created" optional="hide"/>
             </list>
         </field>
     </record>
@@ -35,31 +42,51 @@
             <form string="Dataset">
                 <header>
                     <button name="action_process" type="object" string="Process" 
-                            class="btn-primary" invisible="status not in ('uploading', 'error')"/>
-                    <button name="action_archive" type="object" string="Archive"/>
+                            class="btn-primary"
+                            invisible="status not in ('uploading', 'error')"/>
+                    <button name="action_archive" type="object" string="Archive"
+                           />
                     <field name="status" widget="statusbar" 
                            statusbar_visible="uploading,processing,ready"/>
                 </header>
                 <sheet>
-                    <div class="oe_title">
-                        <label for="name" class="oe_edit_only"/>
-                        <h1><field name="name" placeholder="Dataset Name"/></h1>
+                    <!-- Alert on error -->
+                    <div class="alert alert-danger mb-3" role="alert"
+                         invisible="status != 'error'">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <strong>Error:</strong> This dataset encountered an error during processing. 
+                        Check the <em>Error Details</em> tab below.
                     </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Customer Transactions Q1 2026"/></h1>
+                    </div>
+                    
                     <group>
-                        <group>
-                            <field name="file_name"/>
+                        <group string="File Information">
                             <field name="file_data" filename="file_name"/>
-                            <field name="file_size"/>
+                            <field name="file_name"/>
+                            <field name="file_size" widget="char"/>
+                        </group>
+                        <group string="Data Quality">
                             <field name="row_count"/>
                             <field name="column_count"/>
-                        </group>
-                        <group>
-                            <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="uploaded_by"/>
-                            <field name="quality_score"/>
-                            <field name="null_percentage"/>
+                            <field name="quality_score" widget="progressbar"/>
+                            <field name="null_percentage" widget="progressbar"/>
                             <field name="duplicate_count"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Ownership">
+                            <field name="uploaded_by" widget="many2one_avatar_user"/>
                             <field name="processed_date"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Metadata">
+                            <field name="description" placeholder="Brief description of this dataset..."/>
+                            <field name="tags"/>
                         </group>
                     </group>
                     
@@ -68,41 +95,27 @@
                         <page string="Columns" name="columns">
                             <field name="column_ids">
                                 <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="column_type"/>
+                                    <field name="name" string="Column"/>
+                                    <field name="column_type" widget="badge"/>
                                     <field name="null_count"/>
-                                    <field name="null_percentage"/>
+                                    <field name="null_percentage" widget="progressbar"/>
                                     <field name="unique_count"/>
-                                    <field name="is_target"/>
-                                    <field name="is_feature"/>
+                                    <field name="is_target" widget="boolean_toggle"/>
+                                    <field name="is_feature" widget="boolean_toggle"/>
                                 </list>
                             </field>
-                        </page>
-                        
-                        <!-- Description Tab -->
-                        <page string="Description" name="description">
-                            <group>
-                                <field name="description" nolabel="1"/>
-                            </group>
-                            <group>
-                                <field name="tags"/>
-                            </group>
                         </page>
                         
                         <!-- Error Tab -->
                         <page string="Error Details" name="error" 
                               invisible="status != 'error'">
                             <group>
-                                <field name="error_message"/>
+                                <field name="error_message" nolabel="1" readonly="1"/>
                             </group>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -113,15 +126,19 @@
         <field name="model">optimaai.dataset</field>
         <field name="arch" type="xml">
             <search string="Search Datasets">
-                <field name="name"/>
-                <field name="file_name"/>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('file_name', 'ilike', self)]"/>
+                <field name="uploaded_by"/>
+                <separator/>
                 <filter name="uploading" string="Uploading" domain="[('status', '=', 'uploading')]"/>
                 <filter name="processing" string="Processing" domain="[('status', '=', 'processing')]"/>
                 <filter name="ready" string="Ready" domain="[('status', '=', 'ready')]"/>
                 <filter name="error" string="Error" domain="[('status', '=', 'error')]"/>
+                <separator/>
+                <filter name="high_quality" string="High Quality (≥80%)" domain="[('quality_score', '&gt;=', 80)]"/>
                 <group>
                     <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
                     <filter string="Uploaded By" name="group_uploaded" context="{'group_by': 'uploaded_by'}"/>
+                    <filter string="Created" name="group_date" context="{'group_by': 'create_date:month'}"/>
                 </group>
             </search>
         </field>
@@ -132,31 +149,49 @@
         <field name="name">optimaai.dataset.kanban</field>
         <field name="model">optimaai.dataset</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="status" class="o_kanban_small_column">
+            <kanban default_group_by="status" class="o_kanban_small_column" sample="1">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="status"/>
                 <field name="row_count"/>
+                <field name="column_count"/>
+                <field name="quality_score"/>
                 <field name="file_name"/>
+                <field name="uploaded_by"/>
                 <field name="create_date"/>
+                <progressbar field="status" 
+                             colors='{"uploading": "info", "processing": "warning", "ready": "success", "error": "danger"}'/>
                 <templates>
-                    <t t-name="kanban-box">
-                        <div class="oe_kanban_global_click">
-                            <div class="oe_kanban_content">
-                                <strong><field name="name"/></strong>
-                                <div class="text-muted">
-                                    <i class="fa fa-file"/> <field name="file_name"/>
-                                </div>
-                                <div>
-                                    <i class="fa fa-table"/> <field name="row_count"/> rows
-                                </div>
+                    <t t-name="card">
+                        <div>
+                            <field name="name" class="fw-bold fs-5"/>
+                            <div class="text-muted small mt-1">
+                                <i class="fa fa-file-o me-1"/><field name="file_name"/>
                             </div>
-                            <div class="oe_kanban_bottom_right">
-                                <field name="status" widget="label" 
-                                       decoration-info="status=='uploading'"
-                                       decoration-success="status=='ready'"
-                                       decoration-warning="status=='processing'"/>
+                        </div>
+                        <hr class="my-2"/>
+                        <div class="row g-1">
+                            <div class="col-4 text-center">
+                                <div class="fw-bold text-primary"><field name="row_count"/></div>
+                                <small class="text-muted">Rows</small>
                             </div>
+                            <div class="col-4 text-center">
+                                <div class="fw-bold text-primary"><field name="column_count"/></div>
+                                <small class="text-muted">Columns</small>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="fw-bold text-success"><field name="quality_score"/>%</div>
+                                <small class="text-muted">Quality</small>
+                            </div>
+                        </div>
+                        <hr class="my-2"/>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <field name="uploaded_by" widget="many2one_avatar_user"/>
+                            <field name="status" widget="label" 
+                                   decoration-info="status=='uploading'"
+                                   decoration-success="status=='ready'"
+                                   decoration-warning="status=='processing'"
+                                   decoration-danger="status=='error'"/>
                         </div>
                     </t>
                 </templates>
@@ -168,14 +203,14 @@
     <record id="action_dataset" model="ir.actions.act_window">
         <field name="name">Datasets</field>
         <field name="res_model">optimaai.dataset</field>
-        <field name="view_mode">list,form,kanban</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="search_view_id" ref="view_dataset_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No datasets found
+                Upload your first dataset
             </p>
             <p>
-                Create your first dataset to start analyzing your data.
+                Upload CSV, Excel, or JSON files to start analyzing your data with AI.
             </p>
         </field>
     </record>
@@ -188,12 +223,12 @@
             <list string="Dataset Columns">
                 <field name="dataset_id"/>
                 <field name="name"/>
-                <field name="column_type"/>
-                <field name="is_target"/>
-                <field name="is_feature"/>
+                <field name="column_type" widget="badge"/>
+                <field name="is_target" widget="boolean_toggle"/>
+                <field name="is_feature" widget="boolean_toggle"/>
                 <field name="unique_count"/>
                 <field name="null_count"/>
-                <field name="null_percentage"/>
+                <field name="null_percentage" widget="progressbar"/>
             </list>
         </field>
     </record>

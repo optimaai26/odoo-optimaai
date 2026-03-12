@@ -9,17 +9,29 @@
         <field name="name">optimaai.report.tree</field>
         <field name="model">optimaai.report</field>
         <field name="arch" type="xml">
-            <list string="Reports" decoration-warning="status=='draft'" 
+            <list string="Reports" 
+                  decoration-warning="status=='draft'" 
                   decoration-success="status=='completed'"
-                  decoration-danger="status=='failed'">
-                <field name="name"/>
-                <field name="report_type"/>
-                <field name="format"/>
-                <field name="status" widget="badge"/>
-                <field name="schedule_type"/>
-                <field name="next_run_date"/>
-                <field name="last_run_date"/>
-                <field name="company_id" groups="base.group_multi_company"/>
+                  decoration-danger="status=='failed'"
+                  multi_edit="1"
+                  sample="1">
+                <field name="name" string="Report"/>
+                <field name="report_type" widget="badge"
+                       decoration-info="report_type=='performance'"
+                       decoration-success="report_type=='summary'"
+                       decoration-warning="report_type=='detailed'"/>
+                <field name="format" widget="badge"/>
+                <field name="status" widget="badge"
+                       decoration-muted="status=='draft'"
+                       decoration-warning="status=='pending'"
+                       decoration-info="status=='generating'"
+                       decoration-success="status=='completed'"
+                       decoration-danger="status=='failed'"/>
+                <field name="schedule_type" optional="show"/>
+                <field name="next_run_date" optional="show"/>
+                <field name="last_run_date" optional="hide"/>
+                <field name="created_by" widget="many2one_avatar_user" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -34,30 +46,39 @@
                     <button name="action_generate" type="object" string="Generate Now" 
                             class="btn-primary"/>
                     <button name="action_download" type="object" string="Download" 
+                           
                             invisible="status != 'completed'"/>
                     <button name="action_preview" type="object" string="Preview" 
+                           
                             invisible="status != 'completed'"/>
                     <field name="status" widget="statusbar" statusbar_visible="draft,pending,generating,completed"/>
                 </header>
                 <sheet>
-                    <div class="oe_title">
-                        <label for="name" class="oe_edit_only"/>
-                        <h1><field name="name" placeholder="Report Name"/></h1>
+                    <!-- Error alert -->
+                    <div class="alert alert-danger mb-3" role="alert"
+                         invisible="status != 'failed'">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <strong>Generation Failed:</strong> Check the Error Details tab for more information.
                     </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Monthly Performance Report"/></h1>
+                    </div>
+                    
                     <group>
-                        <group>
-                            <field name="report_type"/>
-                            <field name="format"/>
-                            <field name="schedule_type"/>
+                        <group string="Report Settings">
+                            <field name="report_type" widget="radio"/>
+                            <field name="format" widget="radio"/>
+                            <field name="created_by" widget="many2one_avatar_user"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Schedule">
+                            <field name="schedule_type" widget="radio"/>
                             <field name="schedule_time" invisible="schedule_type == 'manual'"/>
                             <field name="schedule_day" invisible="schedule_type in ('manual', 'daily')"/>
                             <field name="next_run_date" invisible="schedule_type == 'manual'"/>
-                        </group>
-                        <group>
-                            <field name="status"/>
                             <field name="last_run_date"/>
-                            <field name="created_by"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     
@@ -65,18 +86,27 @@
                         <!-- Data Sources Tab -->
                         <page string="Data Sources" name="data_sources">
                             <group>
-                                <field name="dataset_ids" widget="many2many_tags"/>
-                                <field name="prediction_ids" widget="many2many_tags"/>
-                                <field name="insight_ids" widget="many2many_tags"/>
-                                <field name="kpi_ids" widget="many2many_tags"/>
+                                <group>
+                                    <field name="dataset_ids" widget="many2many_tags"/>
+                                    <field name="prediction_ids" widget="many2many_tags"/>
+                                </group>
+                                <group>
+                                    <field name="insight_ids" widget="many2many_tags"/>
+                                    <field name="kpi_ids" widget="many2many_tags"/>
+                                </group>
                             </group>
                         </page>
                         
                         <!-- Recipients Tab -->
                         <page string="Recipients" name="recipients">
                             <group>
-                                <field name="recipient_user_ids" widget="many2many_tags"/>
-                                <field name="recipient_emails"/>
+                                <group>
+                                    <field name="recipient_user_ids" widget="many2many_tags"/>
+                                </group>
+                                <group>
+                                    <field name="recipient_emails" 
+                                           placeholder="email1@company.com, email2@company.com"/>
+                                </group>
                             </group>
                         </page>
                         
@@ -93,16 +123,12 @@
                         <page string="Error Details" name="error" 
                               invisible="status != 'failed'">
                             <group>
-                                <field name="error_message"/>
+                                <field name="error_message" nolabel="1" readonly="1"/>
                             </group>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -114,17 +140,80 @@
         <field name="arch" type="xml">
             <search string="Search Reports">
                 <field name="name"/>
+                <field name="created_by"/>
+                <separator/>
                 <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
                 <filter name="completed" string="Completed" domain="[('status', '=', 'completed')]"/>
                 <filter name="failed" string="Failed" domain="[('status', '=', 'failed')]"/>
                 <separator/>
                 <filter name="scheduled" string="Scheduled" domain="[('schedule_type', '!=', 'manual')]"/>
+                <filter name="manual" string="Manual Only" domain="[('schedule_type', '=', 'manual')]"/>
                 <group>
                     <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
                     <filter string="Type" name="group_type" context="{'group_by': 'report_type'}"/>
+                    <filter string="Format" name="group_format" context="{'group_by': 'format'}"/>
                     <filter string="Schedule" name="group_schedule" context="{'group_by': 'schedule_type'}"/>
                 </group>
             </search>
+        </field>
+    </record>
+
+    <!-- Report Kanban View (NEW) -->
+    <record id="view_report_kanban" model="ir.ui.view">
+        <field name="name">optimaai.report.kanban</field>
+        <field name="model">optimaai.report</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status" class="o_kanban_small_column" sample="1">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="report_type"/>
+                <field name="format"/>
+                <field name="status"/>
+                <field name="schedule_type"/>
+                <field name="last_run_date"/>
+                <field name="next_run_date"/>
+                <field name="created_by"/>
+                <progressbar field="status" 
+                             colors='{"draft": "muted", "pending": "warning", "generating": "info", "completed": "success", "failed": "danger"}'/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <field name="format" widget="badge"/>
+                        </div>
+                        <div class="mt-1">
+                            <field name="report_type" widget="badge"
+                                   decoration-info="report_type=='performance'"
+                                   decoration-success="report_type=='summary'"
+                                   decoration-warning="report_type=='detailed'"/>
+                        </div>
+                        <hr class="my-2"/>
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Schedule</small>
+                                <field name="schedule_type" class="fw-bold"/>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Last Run</small>
+                                <span class="fw-bold">
+                                    <t t-if="record.last_run_date.value">
+                                        <field name="last_run_date"/>
+                                    </t>
+                                    <t t-else=""><em class="text-muted">Never</em></t>
+                                </span>
+                            </div>
+                        </div>
+                        <hr class="my-2"/>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <field name="created_by" widget="many2one_avatar_user"/>
+                            <field name="status" widget="label"
+                                   decoration-muted="status=='draft'"
+                                   decoration-success="status=='completed'"
+                                   decoration-danger="status=='failed'"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
     
@@ -132,14 +221,14 @@
     <record id="action_report" model="ir.actions.act_window">
         <field name="name">Reports</field>
         <field name="res_model">optimaai.report</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="search_view_id" ref="view_report_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No reports found
+                Create your first report
             </p>
             <p>
-                Create custom reports to visualize your data insights.
+                Build custom reports to visualize your data insights and share with your team.
             </p>
         </field>
     </record>

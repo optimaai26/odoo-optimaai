@@ -466,7 +466,7 @@ export class OptimaAIDashboard extends Component {
                 datasets: [{
                     label: "Count",
                     data,
-                    backgroundColor: labels.map(l => colors[l] || "#95a5a6"),
+                    backgroundColor: labels.map(l => colors[l.toLowerCase()] || "#95a5a6"),
                     borderRadius: 6,
                     borderSkipped: false,
                 }],
@@ -502,7 +502,7 @@ export class OptimaAIDashboard extends Component {
                 labels,
                 datasets: [{
                     data,
-                    backgroundColor: Object.keys(byStatus).map(k => bgColors[k] || "#95a5a6"),
+                    backgroundColor: labels.map(l => bgColors[l.toLowerCase()] || "#95a5a6"),
                     borderWidth: 2,
                     borderColor: "#fff",
                 }],

@@ -9,13 +9,20 @@
         <field name="name">optimaai.canvas.tree</field>
         <field name="model">optimaai.canvas</field>
         <field name="arch" type="xml">
-            <list string="Canvases">
-                <field name="name"/>
-                <field name="canvas_type"/>
-                <field name="status" widget="badge"/>
-                <field name="created_by"/>
-                <field name="company_id" groups="base.group_multi_company"/>
-                <field name="create_date"/>
+            <list string="Canvases" multi_edit="1" sample="1">
+                <field name="name" string="Canvas"/>
+                <field name="canvas_type" widget="badge"
+                       decoration-info="canvas_type=='analysis'"
+                       decoration-success="canvas_type=='pipeline'"
+                       decoration-warning="canvas_type=='workflow'"/>
+                <field name="status" widget="badge"
+                       decoration-muted="status=='draft'"
+                       decoration-info="status=='active'"
+                       decoration-success="status=='completed'"
+                       decoration-danger="status=='archived'"/>
+                <field name="created_by" widget="many2one_avatar_user"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="create_date" string="Created" optional="hide"/>
             </list>
         </field>
     </record>
@@ -31,18 +38,19 @@
                 </header>
                 <sheet>
                     <div class="oe_title">
-                        <label for="name" class="oe_edit_only"/>
-                        <h1><field name="name" placeholder="Canvas Name"/></h1>
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Customer Segmentation Pipeline"/></h1>
                     </div>
+                    
                     <group>
-                        <group>
-                            <field name="canvas_type"/>
+                        <group string="Settings">
+                            <field name="canvas_type" widget="radio"/>
                             <field name="status"/>
-                            <field name="description"/>
                         </group>
-                        <group>
+                        <group string="Info">
+                            <field name="description" placeholder="Describe what this canvas does..."/>
+                            <field name="created_by" widget="many2one_avatar_user"/>
                             <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="created_by"/>
                         </group>
                     </group>
                     
@@ -50,7 +58,8 @@
                         <!-- Configuration Tab -->
                         <page string="Configuration" name="configuration">
                             <group>
-                                <field name="config" nolabel="1" widget="text"/>
+                                <field name="config" nolabel="1" widget="text"
+                                       placeholder="JSON configuration for this canvas..."/>
                             </group>
                         </page>
                         
@@ -58,9 +67,9 @@
                         <page string="Blocks" name="blocks">
                             <field name="block_ids">
                                 <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
                                     <field name="name"/>
-                                    <field name="block_type"/>
-                                    <field name="sequence"/>
+                                    <field name="block_type" widget="badge"/>
                                     <field name="position_x"/>
                                     <field name="position_y"/>
                                 </list>
@@ -73,17 +82,13 @@
                                 <list editable="bottom">
                                     <field name="source_block_id"/>
                                     <field name="target_block_id"/>
-                                    <field name="connection_type"/>
+                                    <field name="connection_type" widget="badge"/>
                                 </list>
                             </field>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -95,11 +100,54 @@
         <field name="arch" type="xml">
             <search string="Search Canvases">
                 <field name="name"/>
+                <field name="created_by"/>
+                <separator/>
+                <filter name="active" string="Active" domain="[('status', '=', 'active')]"/>
+                <filter name="draft" string="Draft" domain="[('status', '=', 'draft')]"/>
                 <group>
                     <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
                     <filter string="Type" name="group_type" context="{'group_by': 'canvas_type'}"/>
+                    <filter string="Creator" name="group_creator" context="{'group_by': 'created_by'}"/>
                 </group>
             </search>
+        </field>
+    </record>
+
+    <!-- Canvas Kanban View (NEW) -->
+    <record id="view_canvas_kanban" model="ir.ui.view">
+        <field name="name">optimaai.canvas.kanban</field>
+        <field name="model">optimaai.canvas</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status" class="o_kanban_small_column" sample="1">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="canvas_type"/>
+                <field name="status"/>
+                <field name="created_by"/>
+                <field name="description"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <field name="canvas_type" widget="badge"
+                                   decoration-info="canvas_type=='analysis'"
+                                   decoration-success="canvas_type=='pipeline'"
+                                   decoration-warning="canvas_type=='workflow'"/>
+                        </div>
+                        <div class="text-muted small mt-1" t-if="record.description.value">
+                            <field name="description"/>
+                        </div>
+                        <hr class="my-2"/>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <field name="created_by" widget="many2one_avatar_user"/>
+                            <field name="status" widget="label"
+                                   decoration-muted="status=='draft'"
+                                   decoration-info="status=='active'"
+                                   decoration-success="status=='completed'"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
     
@@ -107,14 +155,14 @@
     <record id="action_canvas" model="ir.actions.act_window">
         <field name="name">Canvases</field>
         <field name="res_model">optimaai.canvas</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="search_view_id" ref="view_canvas_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No canvases found
+                Design your first canvas
             </p>
             <p>
-                Create a canvas to design data workflows and analysis pipelines.
+                Create a canvas to design data workflows and analysis pipelines visually.
             </p>
         </field>
     </record>
@@ -125,10 +173,10 @@
         <field name="model">optimaai.canvas.block</field>
         <field name="arch" type="xml">
             <list string="Canvas Blocks">
+                <field name="sequence" widget="handle"/>
                 <field name="canvas_id"/>
                 <field name="name"/>
-                <field name="block_type"/>
-                <field name="sequence"/>
+                <field name="block_type" widget="badge"/>
             </list>
         </field>
     </record>
@@ -140,22 +188,23 @@
             <form string="Canvas Block">
                 <sheet>
                     <div class="oe_title">
-                        <label for="name" class="oe_edit_only"/>
+                        <label for="name"/>
                         <h1><field name="name" placeholder="Block Name"/></h1>
                     </div>
                     <group>
-                        <group>
+                        <group string="Block Settings">
                             <field name="canvas_id"/>
-                            <field name="block_type"/>
+                            <field name="block_type" widget="radio"/>
                             <field name="sequence"/>
                         </group>
-                        <group>
+                        <group string="Position">
                             <field name="position_x"/>
                             <field name="position_y"/>
                         </group>
                     </group>
                     <group string="Configuration">
-                        <field name="config" nolabel="1" widget="text"/>
+                        <field name="config" nolabel="1" widget="text"
+                               placeholder="JSON configuration for this block..."/>
                     </group>
                     <group string="Output">
                         <field name="result_data" nolabel="1" widget="text" readonly="1"/>

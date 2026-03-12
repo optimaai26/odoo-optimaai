@@ -10,12 +10,20 @@
         <field name="model">optimaai.notification</field>
         <field name="arch" type="xml">
             <list string="Notifications"
-                  decoration-muted="is_read==True">
-                <field name="title"/>
-                <field name="notification_type" widget="badge"/>
-                <field name="is_read"/>
-                <field name="create_date"/>
-                <field name="user_id"/>
+                  decoration-muted="is_read==True"
+                  decoration-bf="is_read==False"
+                  sample="1">
+                <field name="title" string="Notification"/>
+                <field name="notification_type" widget="badge"
+                       decoration-info="notification_type=='info'"
+                       decoration-warning="notification_type=='warning'"
+                       decoration-success="notification_type=='success'"
+                       decoration-danger="notification_type=='error'"/>
+                <field name="is_read" widget="boolean_toggle"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="create_date" string="Received"/>
+                <field name="read_date" optional="hide"/>
+                <field name="related_model" optional="hide"/>
             </list>
         </field>
     </record>
@@ -28,34 +36,65 @@
             <form string="Notification">
                 <header>
                     <button name="action_mark_read" type="object" string="Mark as Read" 
+                            class="btn-primary"
                             invisible="is_read"/>
                     <button name="action_mark_unread" type="object" string="Mark as Unread" 
+                           
                             invisible="not is_read"/>
-                    <button name="open_related" type="object" string="Open Related Record"/>
+                    <button name="open_related" type="object" string="Open Related Record"
+                           />
                 </header>
                 <sheet>
+                    <!-- Type-based alert banner -->
+                    <div class="alert alert-danger mb-3" role="alert"
+                         invisible="notification_type != 'error'">
+                        <i class="fa fa-times-circle me-2"/>
+                        <strong>Error Notification</strong>
+                    </div>
+                    <div class="alert alert-warning mb-3" role="alert"
+                         invisible="notification_type != 'warning'">
+                        <i class="fa fa-warning me-2"/>
+                        <strong>Warning Notification</strong>
+                    </div>
+                    <div class="alert alert-success mb-3" role="alert"
+                         invisible="notification_type != 'success'">
+                        <i class="fa fa-check-circle me-2"/>
+                        <strong>Success Notification</strong>
+                    </div>
+                    <div class="alert alert-info mb-3" role="alert"
+                         invisible="notification_type != 'info'">
+                        <i class="fa fa-info-circle me-2"/>
+                        <strong>Info Notification</strong>
+                    </div>
+
                     <div class="oe_title">
                         <h1><field name="title" placeholder="Notification Title"/></h1>
                     </div>
+                    
                     <group>
-                        <group>
-                            <field name="notification_type"/>
-                            <field name="user_id"/>
+                        <group string="Details">
+                            <field name="notification_type" widget="radio"/>
+                            <field name="user_id" widget="many2one_avatar_user"/>
                         </group>
-                        <group>
-                            <field name="is_read"/>
+                        <group string="Status">
+                            <field name="is_read" widget="boolean_toggle"/>
                             <field name="read_date"/>
                         </group>
                     </group>
                     
                     <group string="Message">
-                        <field name="message" nolabel="1"/>
+                        <field name="message" nolabel="1" 
+                               placeholder="Notification message content..."/>
                     </group>
                     
                     <group string="Related Record">
-                        <field name="related_model"/>
-                        <field name="related_id"/>
-                        <field name="action"/>
+                        <group>
+                            <field name="related_model"/>
+                            <field name="related_id"/>
+                        </group>
+                        <group>
+                            <field name="action"/>
+                        </group>
                     </group>
                 </sheet>
             </form>
@@ -70,18 +109,62 @@
             <search string="Search Notifications">
                 <field name="title"/>
                 <field name="user_id"/>
+                <separator/>
                 <filter name="unread" string="Unread" domain="[('is_read', '=', False)]"/>
                 <filter name="read" string="Read" domain="[('is_read', '=', True)]"/>
                 <separator/>
-                <filter name="info" string="Info" domain="[('notification_type', '=', 'info')]"/>
-                <filter name="warning" string="Warning" domain="[('notification_type', '=', 'warning')]"/>
-                <filter name="success" string="Success" domain="[('notification_type', '=', 'success')]"/>
-                <filter name="error" string="Error" domain="[('notification_type', '=', 'error')]"/>
+                <filter name="info" string="ℹ️ Info" domain="[('notification_type', '=', 'info')]"/>
+                <filter name="warning" string="⚠️ Warning" domain="[('notification_type', '=', 'warning')]"/>
+                <filter name="success" string="✅ Success" domain="[('notification_type', '=', 'success')]"/>
+                <filter name="error" string="❌ Error" domain="[('notification_type', '=', 'error')]"/>
                 <group>
                     <filter string="Type" name="group_type" context="{'group_by': 'notification_type'}"/>
                     <filter string="User" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Read Status" name="group_read" context="{'group_by': 'is_read'}"/>
                 </group>
             </search>
+        </field>
+    </record>
+
+    <!-- Notification Kanban View (NEW) -->
+    <record id="view_notification_kanban" model="ir.ui.view">
+        <field name="name">optimaai.notification.kanban</field>
+        <field name="model">optimaai.notification</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="notification_type" class="o_kanban_small_column" sample="1">
+                <field name="id"/>
+                <field name="title"/>
+                <field name="notification_type"/>
+                <field name="is_read"/>
+                <field name="message"/>
+                <field name="user_id"/>
+                <field name="create_date"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <field name="title" class="fw-bold"/>
+                            <field name="notification_type" widget="badge"
+                                   decoration-info="notification_type=='info'"
+                                   decoration-warning="notification_type=='warning'"
+                                   decoration-success="notification_type=='success'"
+                                   decoration-danger="notification_type=='error'"/>
+                        </div>
+                        <div class="text-muted small mt-1" t-if="record.message.value">
+                            <field name="message"/>
+                        </div>
+                        <hr class="my-2"/>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <span t-if="!record.is_read.raw_value" class="badge text-bg-primary">
+                                <i class="fa fa-circle me-1"/> New
+                            </span>
+                            <span t-else="" class="badge text-bg-light text-muted">
+                                <i class="fa fa-check me-1"/> Read
+                            </span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
     
@@ -89,7 +172,7 @@
     <record id="action_notification_my" model="ir.actions.act_window">
         <field name="name">My Notifications</field>
         <field name="res_model">optimaai.notification</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="domain">[('user_id', '=', uid)]</field>
         <field name="context">{'search_default_unread': 1}</field>
         <field name="search_view_id" ref="view_notification_search"/>
@@ -107,7 +190,7 @@
     <record id="action_notification_all" model="ir.actions.act_window">
         <field name="name">All Notifications</field>
         <field name="res_model">optimaai.notification</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="search_view_id" ref="view_notification_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

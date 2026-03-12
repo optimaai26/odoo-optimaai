@@ -595,7 +595,8 @@ $priority-colors: (
 .o_optimaai_dashboard {
     padding: 0;
     background: #f0f2f5;
-    min-height: 100vh;
+    height: 100%;
+    overflow-y: auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
     // --- Dark Gradient Header ---

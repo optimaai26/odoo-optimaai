@@ -9,16 +9,30 @@
         <field name="name">optimaai.prediction.tree</field>
         <field name="model">optimaai.prediction</field>
         <field name="arch" type="xml">
-            <list string="Predictions" decoration-warning="status=='queued'" 
-                  decoration-info="status=='running'" decoration-success="status=='completed'"
-                  decoration-danger="status=='failed'">
-                <field name="name"/>
+            <list string="Predictions" 
+                  decoration-warning="status=='queued'" 
+                  decoration-info="status=='running'" 
+                  decoration-success="status=='completed'"
+                  decoration-danger="status=='failed'"
+                  multi_edit="1"
+                  sample="1">
+                <field name="name" string="Prediction"/>
                 <field name="dataset_id"/>
-                <field name="prediction_type"/>
-                <field name="status" widget="badge"/>
-                <field name="result_confidence"/>
-                <field name="completed_date"/>
-                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="prediction_type" widget="badge" 
+                       decoration-info="prediction_type=='churn'"
+                       decoration-success="prediction_type=='revenue_forecast'"
+                       decoration-warning="prediction_type=='growth_scoring'"/>
+                <field name="status" widget="badge"
+                       decoration-warning="status=='queued'"
+                       decoration-info="status=='running'"
+                       decoration-success="status=='completed'"
+                       decoration-danger="status=='failed'"/>
+                <field name="result_confidence" widget="progressbar" optional="show"/>
+                <field name="progress" widget="progressbar" optional="hide"/>
+                <field name="duration_seconds" string="Duration (s)" optional="hide"/>
+                <field name="started_date" optional="hide"/>
+                <field name="completed_date" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -31,32 +45,55 @@
             <form string="Prediction">
                 <header>
                     <button name="action_run" type="object" string="Run Prediction" 
-                            class="btn-primary" invisible="status not in ('queued', 'failed')"/>
+                            class="btn-primary"
+                            invisible="status not in ('queued', 'failed')"/>
                     <button name="action_cancel" type="object" string="Cancel" 
+                           
                             invisible="status != 'running'"/>
                     <button name="action_rerun" type="object" string="Re-run" 
+                           
                             invisible="status not in ('completed', 'failed')"/>
                     <field name="status" widget="statusbar" 
                            statusbar_visible="queued,running,completed"/>
                 </header>
                 <sheet>
-                    <div class="oe_title">
-                        <label for="name" class="oe_edit_only"/>
-                        <h1><field name="name" placeholder="Prediction Name"/></h1>
+                    <!-- Alert on failure -->
+                    <div class="alert alert-danger mb-3" role="alert"
+                         invisible="status != 'failed'">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <strong>Failed:</strong> This prediction encountered an error. 
+                        Check the <em>Error Details</em> tab or re-run.
                     </div>
+
+                    <!-- Running progress banner -->
+                    <div class="alert alert-info mb-3" role="alert"
+                         invisible="status != 'running'">
+                        <i class="fa fa-spinner fa-spin me-2"/>
+                        <strong>Running:</strong> Prediction is currently being processed...
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Churn Prediction — March 2026"/></h1>
+                    </div>
+                    
                     <group>
-                        <group>
+                        <group string="Configuration">
                             <field name="dataset_id"/>
-                            <field name="prediction_type"/>
-                            <field name="progress"/>
+                            <field name="prediction_type" widget="radio"/>
                         </group>
-                        <group>
-                            <field name="status"/>
-                            <field name="result_confidence"/>
-                            <field name="started_date"/>
-                            <field name="completed_date"/>
+                        <group string="Results">
+                            <field name="result_confidence" widget="progressbar"/>
+                            <field name="progress" widget="progressbar"/>
                             <field name="duration_seconds"/>
                             <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Timeline">
+                            <field name="started_date"/>
+                            <field name="completed_date"/>
                         </group>
                     </group>
                     
@@ -64,21 +101,22 @@
                         <!-- Options Tab -->
                         <page string="Options" name="options">
                             <group>
-                                <field name="prediction_options" widget="text"/>
+                                <field name="prediction_options" widget="text" 
+                                       placeholder="JSON options for the prediction model..."/>
                             </group>
                         </page>
                         
                         <!-- Results Tab -->
                         <page string="Results" name="results" 
                               invisible="status != 'completed'">
-                            <group>
-                                <field name="result_summary"/>
+                            <group string="Summary">
+                                <field name="result_summary" nolabel="1"/>
                             </group>
-                            <group>
-                                <field name="result_data" widget="text"/>
+                            <group string="Raw Data">
+                                <field name="result_data" widget="text" nolabel="1" readonly="1"/>
                             </group>
-                            <group>
-                                <field name="chart_config" widget="text"/>
+                            <group string="Chart Configuration">
+                                <field name="chart_config" widget="text" nolabel="1"/>
                             </group>
                         </page>
                         
@@ -86,16 +124,12 @@
                         <page string="Error Details" name="error" 
                               invisible="status != 'failed'">
                             <group>
-                                <field name="error_message"/>
+                                <field name="error_message" nolabel="1" readonly="1"/>
                             </group>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -106,8 +140,9 @@
         <field name="model">optimaai.prediction</field>
         <field name="arch" type="xml">
             <search string="Search Predictions">
-                <field name="name"/>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('dataset_id', 'ilike', self)]"/>
                 <field name="dataset_id"/>
+                <separator/>
                 <filter name="queued" string="Queued" domain="[('status', '=', 'queued')]"/>
                 <filter name="running" string="Running" domain="[('status', '=', 'running')]"/>
                 <filter name="completed" string="Completed" domain="[('status', '=', 'completed')]"/>
@@ -116,10 +151,13 @@
                 <filter name="churn" string="Churn" domain="[('prediction_type', '=', 'churn')]"/>
                 <filter name="revenue" string="Revenue Forecast" domain="[('prediction_type', '=', 'revenue_forecast')]"/>
                 <filter name="growth" string="Growth Scoring" domain="[('prediction_type', '=', 'growth_scoring')]"/>
+                <separator/>
+                <filter name="high_confidence" string="High Confidence (≥80%)" domain="[('result_confidence', '&gt;=', 80)]"/>
                 <group>
                     <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
                     <filter string="Type" name="group_type" context="{'group_by': 'prediction_type'}"/>
                     <filter string="Dataset" name="group_dataset" context="{'group_by': 'dataset_id'}"/>
+                    <filter string="Completed" name="group_completed" context="{'group_by': 'completed_date:month'}"/>
                 </group>
             </search>
         </field>
@@ -130,28 +168,49 @@
         <field name="name">optimaai.prediction.kanban</field>
         <field name="model">optimaai.prediction</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="status" class="o_kanban_small_column">
+            <kanban default_group_by="status" class="o_kanban_small_column" sample="1">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="status"/>
                 <field name="prediction_type"/>
                 <field name="dataset_id"/>
                 <field name="result_confidence"/>
+                <field name="duration_seconds"/>
+                <progressbar field="status" 
+                             colors='{"queued": "warning", "running": "info", "completed": "success", "failed": "danger"}'/>
                 <templates>
-                    <t t-name="kanban-box">
-                        <div class="oe_kanban_global_click">
-                            <div class="oe_kanban_content">
-                                <strong><field name="name"/></strong>
-                                <div class="text-muted">
-                                    <i class="fa fa-database"/> <field name="dataset_id"/>
+                    <t t-name="card">
+                        <div>
+                            <field name="name" class="fw-bold fs-5"/>
+                        </div>
+                        <div class="text-muted small mt-1">
+                            <i class="fa fa-database me-1"/><field name="dataset_id"/>
+                        </div>
+                        <div class="mt-2">
+                            <field name="prediction_type" widget="badge" 
+                                   decoration-info="prediction_type=='churn'"
+                                   decoration-success="prediction_type=='revenue_forecast'"
+                                   decoration-warning="prediction_type=='growth_scoring'"/>
+                        </div>
+                        <hr class="my-2"/>
+                        <div class="row g-1">
+                            <div class="col-6 text-center">
+                                <div class="fw-bold text-primary">
+                                    <t t-if="record.result_confidence.value">
+                                        <field name="result_confidence"/>%
+                                    </t>
+                                    <t t-else="">—</t>
                                 </div>
-                                <div>
-                                    <span class="label label-default"><field name="prediction_type"/></span>
+                                <small class="text-muted">Confidence</small>
+                            </div>
+                            <div class="col-6 text-center">
+                                <div class="fw-bold">
+                                    <t t-if="record.duration_seconds.value">
+                                        <field name="duration_seconds"/>s
+                                    </t>
+                                    <t t-else="">—</t>
                                 </div>
-                                <div t-if="record.result_confidence.value">
-                                    <i class="fa fa-check-circle text-success"/>
-                                    <field name="result_confidence"/>% confidence
-                                </div>
+                                <small class="text-muted">Duration</small>
                             </div>
                         </div>
                     </t>
@@ -164,14 +223,14 @@
     <record id="action_prediction" model="ir.actions.act_window">
         <field name="name">Predictions</field>
         <field name="res_model">optimaai.prediction</field>
-        <field name="view_mode">list,form,kanban</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="search_view_id" ref="view_prediction_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No predictions found
+                Run your first prediction
             </p>
             <p>
-                Create a prediction to analyze your datasets with AI.
+                Create a prediction to analyze your datasets with AI — churn, revenue, or growth scoring.
             </p>
         </field>
     </record>
