@@ -61,6 +61,21 @@ docker restart odoo-web
 
 ---
 
+## 📚 Tech Stack & Documentation
+
+OptimaAI is built on modern enterprise tools. If you are new to the stack, bookmark these official resources:
+
+| Technology | Purpose | Documentation Link |
+|---|---|---|
+| **Odoo 19 / Python** | Backend ORM, API, XML Views | [Odoo 19 Developer Docs](https://www.odoo.com/documentation/19.0/developer.html) |
+| **OWL (JS)** | Frontend UI Components | [Odoo Web Library (OWL) Docs](https://github.com/odoo/owl) |
+| **PostgreSQL 17** | Database | [PostgreSQL 17 Docs](https://www.postgresql.org/docs/17/index.html) |
+| **Chart.js 4.4** | Dashboard Visualizations | [Chart.js Documentation](https://www.chartjs.org/docs/4.4.4/) |
+| **Bootstrap 5** | Underlying SCSS Grid / Mixins | [Bootstrap 5 Docs](https://getbootstrap.com/docs/5.0/getting-started/introduction/) |
+| **Docker Compose** | Local Environment | [Docker Compose Docs](https://docs.docker.com/compose/) |
+
+---
+
 ## 📁 Project Structure
 
 Before contributing, understand where things live:
