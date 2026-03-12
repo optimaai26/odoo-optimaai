@@ -1,80 +1,126 @@
-# OptimaAI - Business Intelligence Platform for Odoo
+# OptimaAI — Business Intelligence Platform for Odoo
 
-OptimaAI is a comprehensive, state-of-the-art Business Intelligence and Predictive Analytics module for Odoo 19. It transforms raw data into actionable insights using AI-powered analysis, automated KPIs, and an interactive data workflow canvas.
+> AI-powered analytics, predictive insights, and KPI tracking — built natively for Odoo 19.
 
-## 🚀 Features
-
-*   **Dataset Management:** Upload, parse, and analyze datasets securely.
-*   **Predictive Analytics:** Run AI predictions (classification, regression, clustering) on your datasets.
-*   **Automated Insights:** Generate and track anomalies, trends, and patterns with priority levels.
-*   **KPI Tracking:** Real-time metrics dashboard with trend indicators.
-*   **Visual Canvas:** Build workflows and custom dashboards using drag-and-drop blocks.
-*   **Public Dashboard:** A public-facing QWeb website layout for stakeholders.
-*   **Modern Frontend:** Built with Odoo's OWL (Odoo Web Library) framework.
-*   **Full REST API:** Secure endpoints for external integrations.
+![Odoo 19](https://img.shields.io/badge/Odoo-19.0-875A7B?style=flat-square)
+![License](https://img.shields.io/badge/License-LGPL--3-blue?style=flat-square)
 
 ---
 
-## 🏗️ Architecture
+## ✨ Features
 
-OptimaAI is structured as a standard Odoo module but leverages both backend and frontend (website) capabilities.
-
-### 1. Models (`/models`)
-Core business logic and database tables using Odoo ORM.
-*   `dataset.py`, `prediction.py`, `insight.py`, `kpi.py` — Core entities.
-*   `canvas.py`, `canvas_block.py` — Workflow management.
-*   `security_mixin.py` — Custom row-level access control.
-
-### 2. Controllers (`/controllers`)
-Routing and API endpoints.
-*   `main.py` — Backend dashboard AJAX endpoints.
-*   `api.py` — Secure REST API (`/api/v1/...`) protected by API keys.
-*   `website.py` — Routes serving QWeb public pages (`website=True`).
-*   `webhook.py` — Ingestion endpoints for external data sources.
-
-### 3. Views (`/views` & `/data/pages`)
-XML definitions for the UI.
-*   `/views` — Backend Odoo views (Tree, Form, Kanban, Search) and Menus.
-*   `/data/pages/dashboard.xml` — Public-facing website QWeb page.
-
-### 4. Static Assets (`/static`)
-Frontend logic and styling.
-*   **JavaScript:** Uses **OWL Framework** ES modules (`src/js/optimaai.js`). Legacy `odoo.define` is strictly prohibited.
-*   **SCSS:** Structured modular styling (`src/scss/optimaai.scss`). Includes website theme overrides (`primary_variables.scss`, `bootstrap_overridden.scss`).
-*   **XML Templates:** OWL component templates (`src/xml/optimaai_templates.xml`).
+| Feature | Description |
+|---|---|
+| **Dataset Management** | Upload, parse, and analyze datasets with quality scoring |
+| **Predictive Analytics** | Run AI predictions (classification, regression, clustering) |
+| **Automated Insights** | Detect anomalies, trends, and patterns with priority levels |
+| **KPI Tracking** | Real-time metrics dashboard with trend indicators and targets |
+| **Visual Canvas** | Drag-and-drop workflow builder for data pipelines |
+| **Interactive Dashboard** | Premium dashboard with Chart.js charts and colored KPIs |
+| **Notification System** | Real-time alerts via systray bell widget |
+| **REST API** | Secured endpoints for external integrations |
+| **Public Dashboard** | Website-facing analytics page for stakeholders |
 
 ---
 
-## 🔌 REST API Integration
+## 🛠️ Quick Start
 
-OptimaAI exposes a secured REST API for system integration.
+### Prerequisites
 
-**Authentication:** 
-Passed via the `X-API-Key` HTTP header. Manage keys in the Odoo backend under *Configuration > Integrations*.
+- Docker & Docker Compose
+- Git
 
-**Key Endpoints:**
-*   `GET /api/v1/datasets`
-*   `POST /api/v1/predictions/queue`
-*   `GET /api/v1/insights/active`
-*   `GET /api/v1/kpis`
+### Installation
+
+```bash
+# 1. Clone the project
+git clone <repo-url> odoo
+cd odoo
+
+# 2. Start the stack
+docker compose up -d
+
+# 3. Access Odoo
+open http://localhost:8069
+
+# 4. Install the module
+# Navigate to Apps → Update Apps List → Search "OptimaAI" → Install
+```
+
+### Development Mode
+
+```bash
+# Enable live reload for JS/SCSS/XML changes:
+# In config/odoo.conf, set: dev_mode = all
+docker restart odoo-web
+```
 
 ---
 
-## 🛠️ Installation & Setup
+## 📚 Documentation
 
-1. Add the `optimaai` directory to your Odoo `addons-path`.
-2. Ensure external Python dependencies are installed:
-   ```bash
-   pip install requests pandas openpyxl
-   ```
-3. Update the App List in Odoo and install **OptimaAI**.
-4. (Optional) Install demo data by starting Odoo with `-d <your_db> -i optimaai` on an environment with demo data enabled.
+| Doc | Purpose |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Complete technical reference — models, controllers, frontend, security |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, coding standards, Git workflow, testing |
+| [BACKEND_REQUIREMENTS.md](BACKEND_REQUIREMENTS.md) | API contracts — what the frontend expects from the backend |
 
 ---
 
-## 🛡️ Security & Access Control
+## 🏗️ Architecture Overview
 
-Access is strictly managed via Odoo Groups (`security.xml`):
-*   **OptimaAI User:** Can read and interact with data.
-*   **OptimaAI Manager:** Can configure integrations, manage API keys, and approve access requests.
-*   **Row-level Security:** Handled by `ir.model.access.csv` and the `optimaai.security.mixin`.
+OptimaAI is a **full-stack Odoo 19 module** — backend (Python) and frontend (OWL/JS) in one package.
+
+```
+optimaai/
+├── models/          ← 16 Python models (Dataset, Prediction, Insight, KPI, Canvas, ...)
+├── controllers/     ← JSON-RPC + REST API endpoints
+├── views/           ← Odoo XML views + menus
+├── security/        ← Groups + ACLs
+├── static/src/      ← OWL components, SCSS, QWeb templates
+└── __manifest__.py  ← Module manifest
+```
+
+**Data flow:**
+```
+OWL Component → JSON-RPC → Controller → ORM → PostgreSQL
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full entity diagram, API routes, and frontend component map.
+
+---
+
+## 🔌 REST API
+
+External systems can integrate via the REST API:
+
+```bash
+# Example: List all KPIs
+curl -H "X-API-Key: <your-key>" http://localhost:8069/api/v1/kpis
+```
+
+| Resource | Endpoint |
+|---|---|
+| Datasets | `/api/v1/datasets` |
+| Predictions | `/api/v1/predictions` |
+| Insights | `/api/v1/insights` |
+| KPIs | `/api/v1/kpis` |
+
+See [BACKEND_REQUIREMENTS.md](BACKEND_REQUIREMENTS.md) for the full API specification.
+
+---
+
+## 🛡️ Security
+
+| Group | Access |
+|---|---|
+| OptimaAI User | Read + create records |
+| OptimaAI Manager | Full CRUD + configuration |
+
+API access is controlled via `X-API-Key` headers mapped to Odoo users.
+
+---
+
+## 📄 License
+
+[LGPL-3](https://www.gnu.org/licenses/lgpl-3.0.html)

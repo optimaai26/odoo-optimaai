@@ -259,48 +259,4 @@ class Canvas(models.Model):
             'res_id': new_canvas.id,
             'view_mode': 'form',
             'target': 'current',
-        }
-
-
-class CanvasConnection(models.Model):
-    """Connection between canvas blocks."""
-    
-    _name = 'optimaai.canvas.connection'
-    _description = 'Canvas Connection'
-    
-    canvas_id = fields.Many2one(
-        comodel_name='optimaai.canvas',
-        string='Canvas',
-        required=True,
-        ondelete='cascade'
-    )
-    
-    source_block_id = fields.Many2one(
-        comodel_name='optimaai.canvas.block',
-        string='Source Block',
-        required=True,
-        ondelete='cascade'
-    )
-    
-    source_port = fields.Char(
-        string='Source Port',
-        default='output'
-    )
-    
-    target_block_id = fields.Many2one(
-        comodel_name='optimaai.canvas.block',
-        string='Target Block',
-        required=True,
-        ondelete='cascade'
-    )
-    
-    target_port = fields.Char(
-        string='Target Port',
-        default='input'
-    )
-    
-    # Visual properties
-    color = fields.Char(
-        string='Color',
-        default='#666666'
-    )
+        }

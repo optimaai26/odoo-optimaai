@@ -6,7 +6,8 @@
 // by placing .woff2 files in static/fonts/ and using @font-face.
 
 // ---- Google Fonts Import ----
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+// Note: Using v1 API format to avoid semicolons in URL, which break CSS parsing.
+@import url('https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,800&display=swap');
 
 // ---- Font-face declarations (if using local fonts) ----
 // Uncomment and adjust if you want to self-host fonts:

@@ -1,83 +1,240 @@
 # Contributing to OptimaAI
 
-Welcome to the OptimaAI development team! This document outlines the standards, processes, and guidelines for contributing to the OptimaAI Odoo module.
+Welcome to the OptimaAI development team! This guide covers everything you need to start contributing.
 
 ---
 
 ## 🚀 Getting Started
 
-1. **Clone the repository** into your Odoo custom addons directory.
-2. **Setup your dev environment:**
-   Launch Odoo with the `--dev=all` flag to ensure XML, JS, and CSS changes are reloaded without restarting the server:
-   ```bash
-   ./odoo-bin -c odoo.conf -u optimaai --dev=all
-   ```
+### Prerequisites
+
+- **Docker & Docker Compose** — for running the Odoo + PostgreSQL stack
+- **Git** — for version control
+- A text editor (VS Code recommended)
+
+### 1. Clone & Setup
+
+```bash
+# Clone the Odoo project (contains docker-compose.yml + the optimaai module)
+git clone <repo-url> odoo
+cd odoo
+```
+
+### 2. Start the Environment
+
+```bash
+# Start Odoo + PostgreSQL containers
+docker compose up -d
+
+# Check logs
+docker logs -f odoo-web
+```
+
+Odoo will be available at `http://localhost:8069`.
+
+### 3. Install/Upgrade the Module
+
+1. Navigate to **Apps** in Odoo
+2. Click **Update Apps List**
+3. Search for **OptimaAI** and click **Install** (or **Upgrade** if already installed)
+
+Alternatively, restart with upgrade:
+```bash
+docker restart odoo-web
+```
+
+### 4. Development Mode
+
+For live-reloading of XML/JS/CSS changes, ensure Odoo runs with `--dev=all`:
+```
+# In config/odoo.conf, set:
+dev_mode = all
+```
+
+Then restart:
+```bash
+docker restart odoo-web
+```
+
+> [!TIP]
+> Python model changes always require a full restart + module upgrade. JavaScript and SCSS changes only need a browser hard refresh (Ctrl+Shift+R) with `dev_mode = all`.
+
+---
+
+## 📁 Project Structure
+
+Before contributing, understand where things live:
+
+```
+optimaai/
+├── models/                  ← Python data models (ORM)
+├── controllers/             ← API & RPC endpoints
+│   ├── main.py              ← Dashboard + internal JSON-RPC + REST API
+│   └── website.py           ← Public website controller
+├── views/                   ← Odoo XML views (form, tree, kanban, menus)
+├── security/                ← Groups + ACL rules
+├── static/src/
+│   ├── js/optimaai.js       ← OWL frontend components
+│   ├── xml/optimaai_templates.xml  ← QWeb templates
+│   └── scss/                ← Styles
+├── data/                    ← Default data, sequences
+├── demo/                    ← Demo data
+├── services/                ← Python service layer
+├── wizard/                  ← Transient models
+├── tests/                   ← Unit tests
+├── __manifest__.py          ← Module manifest
+├── ARCHITECTURE.md          ← Architecture reference
+└── BACKEND_REQUIREMENTS.md  ← API contracts
+```
+
+> [!IMPORTANT]
+> Read **ARCHITECTURE.md** before making structural changes. It documents all models, controllers, and component relationships.
 
 ---
 
 ## 📐 Coding Standards
 
-### 1. JavaScript (OWL Framework)
+### JavaScript (OWL Framework)
 
-OptimaAI targets **Odoo 19** and strictly uses the modern **OWL framework**. 
+OptimaAI targets **Odoo 19** and uses the **OWL framework** exclusively.
 
-*   **🚫 NO Legacy Code:** Never use `odoo.define()` or `require()`.
-*   **ES Modules:** Use standard ES6 imports (`import { Component } from "@odoo/owl";`).
-*   **Module Declaration:** Every JS file must start with `/** @odoo-module **/`.
-*   **Registries:** Register all components, systray items, and actions via `@web/core/registry`.
+| Rule | Details |
+|---|---|
+| 🚫 No legacy code | Never use `odoo.define()` or `require()` |
+| ✅ ES Modules | `import { Component } from "@odoo/owl"` |
+| ✅ Module header | Every JS file starts with `/** @odoo-module **/` |
+| ✅ Registries | Register via `registry.category("actions").add(...)` |
+| ✅ RPC | Use `rpc` from `@web/core/network/rpc` |
 
-**Example:**
+**Example component:**
 ```javascript
 /** @odoo-module **/
-import { Component, useState } from "@odoo/owl";
+import { Component, useState, onWillStart, useRef } from "@odoo/owl";
 import { registry } from "@web/core/registry";
+import { rpc } from "@web/core/network/rpc";
 
-export class MyCustomCard extends Component {
-    static template = "optimaai.MyCustomCard";
+export class MyWidget extends Component {
+    static template = "optimaai.MyWidget";
     setup() {
-        this.state = useState({ value: 0 });
+        this.state = useState({ data: [] });
+        onWillStart(async () => {
+            this.state.data = await rpc("/optimaai/my-endpoint", {});
+        });
     }
 }
 
-registry.category("actions").add("optimaai_custom_card", MyCustomCard);
+registry.category("actions").add("optimaai_my_widget", MyWidget);
 ```
 
-### 2. Styling (SCSS)
+### SCSS
 
-*   **🚫 NO Plain CSS:** Never write `.css` files. Always use `.scss`.
-*   **Variables:** Use Odoo's built-in CSS variables (`var(--o-color-1)`) for theme consistency, or the variables defined in `src/scss/primary_variables.scss`.
-*   **Dark Mode:** Use the `.o_dark_mode` class selector to target dark mode themes. Do not use `@media (prefers-color-scheme)`.
-*   **File Structure:** Keep files modular. If adding generic styles, add them to `optimaai.scss`. If overriding Bootstrap, use `bootstrap_overridden.scss`.
+| Rule | Details |
+|---|---|
+| 🚫 No plain CSS | Always use `.scss` files |
+| ✅ Odoo variables | Use `var(--o-color-1)` or vars from `primary_variables.scss` |
+| ✅ Dark mode | Use `.o_dark_mode` selector (not `prefers-color-scheme`) |
+| ✅ Prefix classes | All custom classes start with `o_` (Odoo convention) |
 
-### 3. Python (Odoo Models & Controllers)
+### Python (Models & Controllers)
 
-*   **PEP 8:** Follow standard Python PEP 8 style guidelines.
-*   **Odoo Guidelines:** 
-    *   Use `[('field', '=', value)]` standard domain structures.
-    *   Avoid using raw SQL queries unless absolutely necessary for performance. Always prefer the ORM (`self.env['...'].search()`).
-    *   Log errors properly using `import logging; _logger = logging.getLogger(__name__)`.
+| Rule | Details |
+|---|---|
+| ✅ PEP 8 | Follow standard Python style |
+| ✅ ORM first | Use `self.env['model'].search()`, avoid raw SQL |
+| ✅ Logging | `import logging; _logger = logging.getLogger(__name__)` |
+| ✅ Domains | Standard format: `[('field', '=', value)]` |
+| 🚫 No sudo() abuse | Use `request.env` to enforce ACLs |
 
 ---
 
 ## 🧪 Testing
 
-All new features and bug fixes must include tests.
+### Running Tests
 
-1. **Location:** Place tests in the `tests/` directory.
-2. **Framework:** Use Odoo's `TransactionCase` (`from odoo.tests import common, tagged`).
-3. **Tags:** Always tag tests with `@tagged('post_install', '-at_install')`.
-4. **Running tests:**
-   ```bash
-   ./odoo-bin -c odoo.conf -i optimaai --test-enable -d <test_db>
-   ```
+```bash
+# Run inside the Odoo container
+docker exec odoo-web odoo -c /etc/odoo/odoo.conf -i optimaai --test-enable -d <test_db> --stop-after-init
+```
+
+### Writing Tests
+
+```python
+from odoo.tests import tagged, TransactionCase
+
+@tagged('post_install', '-at_install')
+class TestKPI(TransactionCase):
+    def setUp(self):
+        super().setUp()
+        self.Kpi = self.env['optimaai.kpi']
+    
+    def test_kpi_progress_calculation(self):
+        kpi = self.Kpi.create({
+            'name': 'Test KPI',
+            'current_value': 75,
+            'target_value': 100,
+        })
+        self.assertEqual(kpi.progress_percentage, 75.0)
+```
+
+Place tests in `tests/` and import them in `tests/__init__.py`.
 
 ---
 
-## 🔄 Pull Request Process
+## 🔄 Git Workflow
 
-1. **Create a branch:** `feature/your-feature-name` or `fix/issue-description`.
-2. **Update Documentation:** If your change modifies the API or architecture, update `README.md`.
-3. **Commit Messages:** Write clear, concise commit messages. Prefix with the area (e.g., `[JS] Migrate notification bell to OWL`, `[API] Add pagination to datasets`).
-4. **Review:** Request a review from a core maintainer. Ensure your code passes all Python unit tests and compiles without SCSS/JS errors in the browser console.
+### Branch Naming
 
-Thank you for contributing to OptimaAI!
+```
+feature/add-chart-recommendations
+fix/kpi-progress-calculation
+refactor/clean-up-scss
+docs/update-architecture
+```
+
+### Commit Messages
+
+```
+[MODELS] Add prediction_type field to prediction model
+[JS] Integrate Chart.js dynamic loading for dashboard
+[SCSS] Redesign KPI metric strip with colored cards
+[API] Add pagination to dataset list endpoint
+[FIX] Correct read_group compatibility for Odoo 19
+[DOCS] Update ARCHITECTURE.md with new model catalog
+```
+
+### PR Checklist
+
+- [ ] Code follows the coding standards above
+- [ ] No SCSS/JS errors in browser console
+- [ ] Python unit tests pass
+- [ ] `ARCHITECTURE.md` updated if models/controllers/views changed
+- [ ] `BACKEND_REQUIREMENTS.md` updated if API contracts changed
+
+---
+
+## ⚠️ Common Pitfalls
+
+| Pitfall | How to Avoid |
+|---|---|
+| `menu_views.xml` must be loaded last | Never add new view files after `menu_views.xml` in `__manifest__.py` |
+| `read_group` changed in Odoo 19 | Use `{field}_count` instead of `__count` |
+| Chart.js loads from CDN | Ensure internet access in production; fallback to empty charts if offline |
+| SCSS variables don't cascade | Import order in manifest matters — primary_variables → bootstrap overrides → main SCSS |
+
+---
+
+## 🗺️ Where to Find Things
+
+| "I need to..." | Look at... |
+|---|---|
+| Add a new data model | `models/` → create file + add to `models/__init__.py` + add ACLs |
+| Add a new API endpoint | `controllers/main.py` → `OptimaAIRPCController` class |
+| Add a new OWL component | `static/src/js/optimaai.js` + `static/src/xml/optimaai_templates.xml` |
+| Change dashboard layout | `static/src/xml/optimaai_templates.xml` → `optimaai.Dashboard` template |
+| Change dashboard styles | `static/src/scss/optimaai.scss` |
+| Add a menu item | `views/menu_views.xml` (always at the end of manifest data list) |
+| Change security groups | `security/security.xml` + `security/ir.model.access.csv` |
+
+---
+
+Thank you for contributing to OptimaAI! 🚀

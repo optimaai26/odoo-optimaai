@@ -37,3 +37,5 @@ access_optimaai_integration_endpoint_user,optimaai.integration.endpoint.user,mod
 access_optimaai_integration_endpoint_admin,optimaai.integration.endpoint.admin,model_optimaai_integration_endpoint,group_optimaai_admin,1,1,1,1
 access_res_users_api_key_user,res.users.api.key.user,model_res_users_api_key,group_optimaai_user,1,1,1,1
 access_res_users_api_key_admin,res.users.api.key.admin,model_res_users_api_key,group_optimaai_admin,1,1,1,1
+access_optimaai_notification_user,optimaai.notification.user,model_optimaai_notification,group_optimaai_user,1,1,1,0
+access_optimaai_notification_admin,optimaai.notification.admin,model_optimaai_notification,group_optimaai_admin,1,1,1,1

@@ -442,7 +442,7 @@ class OptimaAIAPIController(http.Controller):
                 'code': k.code,
                 'kpi_type': k.kpi_type,
                 'category': k.category,
-                'value': k.value,
+                'value': k.current_value,
                 'target_value': k.target_value,
                 'unit': k.unit,
                 'status': k.status,
@@ -471,7 +471,7 @@ class OptimaAIAPIController(http.Controller):
                 'code': kpi.code,
                 'kpi_type': kpi.kpi_type,
                 'category': kpi.category,
-                'value': kpi.value,
+                'value': kpi.current_value,
                 'previous_value': kpi.previous_value,
                 'target_value': kpi.target_value,
                 'unit': kpi.unit,
@@ -502,7 +502,7 @@ class OptimaAIAPIController(http.Controller):
             
             return json_response({
                 'id': kpi.id,
-                'value': kpi.value,
+                'value': kpi.current_value,
                 'status': kpi.status,
                 'message': 'KPI calculated successfully'
             })
@@ -526,13 +526,13 @@ class OptimaAIDashboardController(http.Controller):
         # Get summary data
         dataset_count = request.env['optimaai.dataset'].search_count([])
         prediction_count = request.env['optimaai.prediction'].search_count([('status', '=', 'completed')])
-        insight_count = request.env['optimaai.insight'].search_count([('status', '=', 'active')])
+        insight_count = request.env['optimaai.insight'].search_count([('action_status', 'not in', ['dismissed', 'resolved'])])
         kpi_count = request.env['optimaai.kpi'].search_count([])
         
         # Get recent items
         recent_datasets = request.env['optimaai.dataset'].search([], limit=5, order='create_date desc')
         recent_predictions = request.env['optimaai.prediction'].search([], limit=5, order='create_date desc')
-        active_insights = request.env['optimaai.insight'].search([('status', '=', 'active')], limit=5, order='create_date desc')
+        active_insights = request.env['optimaai.insight'].search([('action_status', 'not in', ['dismissed', 'resolved'])], limit=5, order='create_date desc')
         
         values = {
             'dataset_count': dataset_count,
@@ -550,7 +550,36 @@ class OptimaAIDashboardController(http.Controller):
     def dashboard_data(self, **kwargs):
         """
         Get dashboard data for AJAX updates.
+        Returns summary counts plus recent KPIs and active insights.
         """
+        # Fetch recent KPIs
+        recent_kpis = request.env['optimaai.kpi'].search([], limit=12, order='write_date desc')
+        kpi_list = [{
+            'id': k.id,
+            'name': k.name,
+            'value': k.current_value,
+            'target_value': k.target_value,
+            'unit': k.unit,
+            'status': k.status,
+            'trend': k.trend,
+            'progress_percentage': k.progress_percentage,
+            'category': k.category or 'operational',
+            'icon': k.icon or 'fa-tachometer',
+        } for k in recent_kpis]
+
+        # Fetch active insights
+        active_insights = request.env['optimaai.insight'].search(
+            [('action_status', 'not in', ['dismissed', 'resolved'])], limit=5, order='create_date desc'
+        )
+        insight_list = [{
+            'id': i.id,
+            'name': i.name,
+            'description': i.summary or '',
+            'insight_type': i.insight_type,
+            'priority': i.priority,
+            'action_status': i.action_status,
+        } for i in active_insights]
+
         return {
             'datasets': {
                 'total': request.env['optimaai.dataset'].search_count([]),
@@ -559,29 +588,176 @@ class OptimaAIDashboardController(http.Controller):
             'predictions': {
                 'total': request.env['optimaai.prediction'].search_count([]),
                 'by_status': self._get_count_by_field('optimaai.prediction', 'status'),
+                'by_type': self._get_count_by_field('optimaai.prediction', 'prediction_type'),
             },
             'insights': {
-                'total': request.env['optimaai.insight'].search_count([('status', '=', 'active')]),
-                'by_priority': self._get_count_by_field('optimaai.insight', 'priority', [('status', '=', 'active')]),
+                'total': request.env['optimaai.insight'].search_count([('action_status', 'not in', ['dismissed', 'resolved'])]),
+                'by_priority': self._get_count_by_field('optimaai.insight', 'priority', [('action_status', 'not in', ['dismissed', 'resolved'])]),
             },
             'kpis': {
                 'total': request.env['optimaai.kpi'].search_count([]),
                 'by_status': self._get_count_by_field('optimaai.kpi', 'status'),
             },
+            'recentKpis': kpi_list,
+            'activeInsights': insight_list,
         }
     
     def _get_count_by_field(self, model, field, domain=None):
         """
         Get count of records grouped by field.
+        Compatible with Odoo 19's read_group format.
         """
         if domain is None:
             domain = []
         
-        groups = request.env[model].read_group(domain, [field], [field])
+        groups = request.env[model].read_group(domain, [], [field])
         result = {}
         for group in groups:
-            result[group[field]] = group['__count']
+            key = group[field]
+            # Odoo 19 uses '<field>_count' instead of '__count'
+            count = group.get('__count', group.get(f'{field}_count', 0))
+            result[key] = count
         return result
+
+
+class OptimaAIRPCController(http.Controller):
+    """
+    JSON-RPC endpoints consumed by the OWL frontend components.
+    All routes use type='json' and auth='user'.
+    """
+
+    # ------------------------------------------
+    # Notification endpoints
+    # ------------------------------------------
+
+    @http.route('/optimaai/notifications/count', type='json', auth='user')
+    def notification_count(self, **kwargs):
+        """Return unread notification count for the current user."""
+        count = request.env['optimaai.notification'].search_count([
+            ('user_id', '=', request.env.uid),
+            ('is_read', '=', False),
+        ])
+        return {'count': count}
+
+    @http.route('/optimaai/notifications/list', type='json', auth='user')
+    def notification_list(self, limit=20, **kwargs):
+        """Return recent notifications for the current user."""
+        notifications = request.env['optimaai.notification'].search(
+            [('user_id', '=', request.env.uid)],
+            limit=int(limit),
+            order='create_date desc',
+        )
+        return {
+            'notifications': [{
+                'id': n.id,
+                'title': n.title,
+                'message': n.message or '',
+                'notification_type': n.notification_type,
+                'is_read': n.is_read,
+                'related_model': n.related_model or False,
+                'related_id': n.related_id or False,
+                'create_date': str(n.create_date) if n.create_date else '',
+            } for n in notifications]
+        }
+
+    @http.route('/optimaai/notifications/mark_read', type='json', auth='user')
+    def notification_mark_read(self, id=None, **kwargs):
+        """Mark a single notification as read."""
+        if id:
+            notif = request.env['optimaai.notification'].browse(int(id))
+            if notif.exists() and notif.user_id.id == request.env.uid:
+                notif.write({'is_read': True})
+        return {'success': True}
+
+    @http.route('/optimaai/notifications/mark_all_read', type='json', auth='user')
+    def notification_mark_all_read(self, **kwargs):
+        """Mark all notifications as read for the current user."""
+        notifications = request.env['optimaai.notification'].search([
+            ('user_id', '=', request.env.uid),
+            ('is_read', '=', False),
+        ])
+        notifications.write({'is_read': True})
+        return {'success': True}
+
+    # ------------------------------------------
+    # Insight endpoints
+    # ------------------------------------------
+
+    @http.route('/optimaai/insight/dismiss', type='json', auth='user')
+    def insight_dismiss(self, id=None, **kwargs):
+        """Dismiss an insight by setting its status to dismissed."""
+        if id:
+            insight = request.env['optimaai.insight'].browse(int(id))
+            if insight.exists():
+                insight.write({'action_status': 'dismissed'})
+        return {'success': True}
+
+    # ------------------------------------------
+    # Dataset preview endpoint
+    # ------------------------------------------
+
+    @http.route('/optimaai/dataset/preview', type='json', auth='user')
+    def dataset_preview(self, dataset_id=None, limit=10, **kwargs):
+        """Return a preview of the dataset rows and columns."""
+        if not dataset_id:
+            return {'data': [], 'columns': []}
+
+        dataset = request.env['optimaai.dataset'].browse(int(dataset_id))
+        if not dataset.exists():
+            return {'data': [], 'columns': []}
+
+        # Parse raw data
+        data = []
+        columns = []
+        try:
+            import json as _json
+            raw = _json.loads(dataset.data_raw or '[]')
+            if isinstance(raw, list) and raw:
+                columns = list(raw[0].keys()) if isinstance(raw[0], dict) else []
+                data = raw[:int(limit)]
+        except Exception:
+            pass
+
+        # Also include column definitions if available
+        if not columns and dataset.column_ids:
+            columns = [c.name for c in dataset.column_ids]
+
+        return {'data': data, 'columns': columns}
+
+    # ------------------------------------------
+    # Canvas endpoints
+    # ------------------------------------------
+
+    @http.route('/optimaai/canvas/load', type='json', auth='user')
+    def canvas_load(self, canvas_id=None, **kwargs):
+        """Load canvas blocks for a given canvas."""
+        if not canvas_id:
+            return {'blocks': []}
+
+        canvas = request.env['optimaai.canvas'].browse(int(canvas_id))
+        if not canvas.exists():
+            return {'blocks': []}
+
+        blocks = [{
+            'id': b.id,
+            'name': b.name,
+            'block_type': b.block_type,
+            'position_x': b.position_x,
+            'position_y': b.position_y,
+            'width': b.width if hasattr(b, 'width') else 1,
+            'height': b.height if hasattr(b, 'height') else 1,
+        } for b in canvas.block_ids]
+
+        return {'blocks': blocks}
+
+    @http.route('/optimaai/canvas/remove_block', type='json', auth='user')
+    def canvas_remove_block(self, block_id=None, **kwargs):
+        """Remove a canvas block by ID."""
+        if block_id:
+            block = request.env['optimaai.canvas.block'].browse(int(block_id))
+            if block.exists():
+                block.unlink()
+        return {'success': True}
 
 
 class OptimaAIWebhookController(http.Controller):

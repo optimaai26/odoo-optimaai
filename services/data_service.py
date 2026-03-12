@@ -4,6 +4,10 @@ Data Service
 ============
 Centralized data management service.
 Handles data import, export, validation, and transformation.
+
+TODO: This service is not yet integrated with any model or controller.
+      It contains useful import/export/transform logic for CSV, JSON, Excel.
+      Wire it into dataset.py or a controller endpoint when ready.
 """
 from odoo import models, api, _, fields
 from odoo.exceptions import UserError, ValidationError

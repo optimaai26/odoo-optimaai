@@ -52,21 +52,6 @@
     </t>
 
 
-    <!-- ==========================================
-         KPI Card Template
-         ========================================== -->
-
-    <t t-name="optimaai.KPICard">
-        <div class="o_kpi_card" t-on-click="onClick">
-            <div class="o_kpi_value" t-esc="props.kpi.value"/>
-            <div class="o_kpi_label" t-esc="props.kpi.name"/>
-            <div t-attf-class="o_kpi_trend #{trendClass}">
-                <i t-attf-class="fa #{trendIcon} o_kpi_trend_icon"/>
-                <span t-if="props.kpi.trend_percentage"
-                      t-esc="(props.kpi.trend_percentage || 0) + '%'"/>
-            </div>
-        </div>
-    </t>
 
 
     <!-- ==========================================
@@ -117,32 +102,6 @@
     </t>
 
 
-    <!-- ==========================================
-         Insight Card Template
-         ========================================== -->
-
-    <t t-name="optimaai.InsightCard">
-        <div t-attf-class="o_insight_card #{insightClass}">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="fw-bold mb-1" t-esc="props.insight.name"/>
-                    <div class="text-muted small" t-esc="props.insight.description"/>
-                </div>
-                <span t-attf-class="o_priority_badge #{priorityClass}"
-                      t-esc="props.insight.priority"/>
-            </div>
-            <div class="mt-2 d-flex gap-2">
-                <button class="btn btn-sm btn-outline-primary o_insight_activate"
-                        t-on-click="onActivate">
-                    <i class="fa fa-check me-1"/>Activate
-                </button>
-                <button class="btn btn-sm btn-outline-secondary o_insight_dismiss"
-                        t-on-click="onDismiss">
-                    <i class="fa fa-times me-1"/>Dismiss
-                </button>
-            </div>
-        </div>
-    </t>
 
 
     <!-- ==========================================
@@ -188,11 +147,15 @@
 
     <t t-name="optimaai.Dashboard">
         <div class="o_optimaai_dashboard">
+            <!-- Dark Gradient Header -->
             <div class="o_dashboard_header">
-                <h1>
-                    <i class="fa fa-tachometer me-2"/>
-                    OptimaAI Dashboard
-                </h1>
+                <div>
+                    <h1>
+                        <i class="fa fa-tachometer me-2"/>
+                        OptimaAI Dashboard
+                    </h1>
+                    <div class="o_header_subtitle">Real-time AI analytics &amp; performance metrics</div>
+                </div>
             </div>
 
             <t t-if="state.loading">
@@ -202,23 +165,171 @@
             </t>
 
             <t t-else="">
-                <!-- KPI Summary Cards -->
-                <div class="o_dashboard_kpis">
-                    <div class="o_kpi_card">
-                        <div class="o_kpi_value" t-esc="state.datasets.total"/>
-                        <div class="o_kpi_label">Datasets</div>
+                <!-- KPI Metric Strip -->
+                <div class="o_metric_strip">
+                    <div class="o_metric_card o_green"
+                         t-on-click="() => this.navigateTo('optimaai.action_dataset')">
+                        <div class="o_metric_value" t-esc="state.datasets.total"/>
+                        <div class="o_metric_label">Total Datasets</div>
                     </div>
-                    <div class="o_kpi_card">
-                        <div class="o_kpi_value" t-esc="state.predictions.total"/>
-                        <div class="o_kpi_label">Predictions</div>
+                    <div class="o_metric_card o_blue"
+                         t-on-click="() => this.navigateTo('optimaai.action_prediction')">
+                        <div class="o_metric_value" t-esc="completedPredictions"/>
+                        <div class="o_metric_label">Predictions Done</div>
                     </div>
-                    <div class="o_kpi_card">
-                        <div class="o_kpi_value" t-esc="state.insights.total"/>
-                        <div class="o_kpi_label">Active Insights</div>
+                    <div class="o_metric_card o_teal">
+                        <div class="o_metric_value"><t t-esc="avgConfidence"/>%</div>
+                        <div class="o_metric_label">Avg Confidence</div>
                     </div>
-                    <div class="o_kpi_card">
-                        <div class="o_kpi_value" t-esc="state.kpis.total"/>
-                        <div class="o_kpi_label">KPIs</div>
+                    <div class="o_metric_card o_orange"
+                         t-on-click="() => this.navigateTo('optimaai.action_insight')">
+                        <div class="o_metric_value" t-esc="state.insights.total"/>
+                        <div class="o_metric_label">Active Insights</div>
+                    </div>
+                    <div class="o_metric_card o_red">
+                        <div class="o_metric_value" t-esc="criticalInsights"/>
+                        <div class="o_metric_label">Critical Alerts</div>
+                    </div>
+                    <div class="o_metric_card o_purple"
+                         t-on-click="() => this.navigateTo('optimaai.action_kpi')">
+                        <div class="o_metric_value">
+                            <t t-esc="onTrackKpis"/>/<t t-esc="state.kpis.total"/>
+                        </div>
+                        <div class="o_metric_label">KPIs On Track</div>
+                    </div>
+                    <div class="o_metric_card o_navy">
+                        <div class="o_metric_value"><t t-esc="avgQuality"/>%</div>
+                        <div class="o_metric_label">Data Quality Avg</div>
+                    </div>
+                </div>
+
+                <!-- Main Content Body -->
+                <div class="o_dashboard_body">
+
+                    <!-- Charts Row -->
+                    <div class="o_charts_row">
+                        <div class="o_chart_panel">
+                            <div class="o_chart_title">Predictions by Type</div>
+                            <canvas t-ref="chartPredictions"/>
+                        </div>
+                        <div class="o_chart_panel">
+                            <div class="o_chart_title">Insights by Priority</div>
+                            <canvas t-ref="chartInsights"/>
+                        </div>
+                        <div class="o_chart_panel">
+                            <div class="o_chart_title">Datasets by Status</div>
+                            <canvas t-ref="chartDatasets"/>
+                        </div>
+                    </div>
+
+                    <!-- KPI Performance Table -->
+                    <div class="o_kpi_table_section" t-if="state.recentKpis.length">
+                        <div class="o_table_title">
+                            <i class="fa fa-table me-2"/>KPI Performance Overview
+                        </div>
+                        <table class="o_kpi_perf_table">
+                            <thead>
+                                <tr>
+                                    <th>KPI Name</th>
+                                    <th>Current</th>
+                                    <th>Target</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="state.recentKpis" t-as="kpi" t-key="kpi.id">
+                                    <tr>
+                                        <td class="o_kpi_name_col">
+                                            <span t-attf-class="o_kpi_icon o_kpi_icon_#{kpi.category || 'operational'}">
+                                                <i class="fa fa-chart-line"/>
+                                            </span>
+                                            <t t-esc="kpi.name"/>
+                                        </td>
+                                        <td class="o_kpi_value_col">
+                                            <t t-esc="formatKpiValue(kpi.value, kpi.unit)"/>
+                                        </td>
+                                        <td class="o_kpi_target_col">
+                                            <t t-esc="formatKpiValue(kpi.target_value, kpi.unit)"/>
+                                        </td>
+                                        <td class="o_progress_cell">
+                                            <div class="o_mini_progress">
+                                                <div class="o_mini_bar"
+                                                     t-attf-style="width: #{Math.min(100, kpi.progress_percentage || 0)}%; background: #{getProgressColor(kpi.progress_percentage || 0)}"/>
+                                            </div>
+                                            <div class="o_progress_label">
+                                                <t t-esc="Math.round(kpi.progress_percentage || 0)"/>%
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span t-attf-class="o_status_pill o_#{kpi.status || 'critical'}">
+                                                <t t-esc="(kpi.status || 'N/A').replace('_', ' ')"/>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span t-attf-class="o_trend_indicator o_#{kpi.trend || 'stable'}">
+                                                <i t-attf-class="fa #{getTrendIcon(kpi.trend)}"/>
+                                                <t t-esc="(kpi.trend || 'stable')"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Active Insights Grid -->
+                    <div class="o_insights_section" t-if="state.activeInsights.length">
+                        <div class="o_section_title">
+                            <i class="fa fa-lightbulb-o me-2"/>Active Insights
+                        </div>
+                        <div class="o_insights_grid">
+                            <t t-foreach="state.activeInsights" t-as="insight" t-key="insight.id">
+                                <div t-attf-class="o_insight_panel o_priority_#{insight.priority}">
+                                    <div class="o_insight_header">
+                                        <div class="o_insight_title" t-esc="insight.name"/>
+                                        <span class="o_insight_type_badge" t-esc="insight.insight_type"/>
+                                    </div>
+                                    <div class="o_insight_summary" t-esc="insight.description"/>
+                                    <div class="o_insight_actions">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                t-on-click="() => this.onInsightActivate(insight.id)">
+                                            <i class="fa fa-check me-1"/>View
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                                t-on-click="() => this.onInsightDismiss(insight.id)">
+                                            <i class="fa fa-times me-1"/>Dismiss
+                                        </button>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="o_quick_actions">
+                        <div class="o_section_title">
+                            <i class="fa fa-rocket me-2"/>Quick Actions
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="o_action_btn"
+                                    t-on-click="() => this.navigateTo('optimaai.action_dataset')">
+                                <i class="fa fa-database"/>View Datasets
+                            </button>
+                            <button class="o_action_btn"
+                                    t-on-click="() => this.navigateTo('optimaai.action_prediction')">
+                                <i class="fa fa-magic"/>View Predictions
+                            </button>
+                            <button class="o_action_btn"
+                                    t-on-click="() => this.navigateTo('optimaai.action_insight')">
+                                <i class="fa fa-lightbulb-o"/>View Insights
+                            </button>
+                            <button class="o_action_btn"
+                                    t-on-click="() => this.navigateTo('optimaai.action_canvas')">
+                                <i class="fa fa-th-large"/>Open Canvas
+                            </button>
+                        </div>
                     </div>
                 </div>
             </t>
