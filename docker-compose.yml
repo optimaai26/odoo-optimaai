@@ -1,0 +1,72 @@
+# ═══════════════════════════════════════════════════════════════════════
+#  Odoo + Postgres — standalone stack
+# ═══════════════════════════════════════════════════════════════════════
+#
+#  Drop this at the root of your odoo repo (next to the optimaai module
+#  folder) and run:
+#
+#      docker compose up -d
+#
+#  Odoo will be reachable at http://localhost:8069. Master password is
+#  set in odoo.conf (default: admin — change it in production).
+#
+#  This stack is intentionally separate from your FastAPI backend stack
+#  per Chapter 3 §3.2.3 (clean tier separation: Odoo has its own DB,
+#  the backend reads only via XML-RPC).
+
+services:
+  # ──────────────────────────────────────────────────────
+  #  Odoo application server
+  # ──────────────────────────────────────────────────────
+  odoo:
+    image: odoo:18
+    container_name: optimaai-odoo
+    depends_on:
+      odoo-db:
+        condition: service_healthy
+    ports:
+      - "8069:8069"     # web client + XML-RPC
+      - "8072:8072"     # longpolling (chat / notifications)
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      # Mount your custom optimaai module folder into the container's
+      # extra-addons path. Adjust the host-side path if your repo layout
+      # puts the module elsewhere — e.g. ./addons/optimaai → /mnt/extra-addons/optimaai
+      - ./optimaai:/mnt/extra-addons/optimaai:ro
+    environment:
+      HOST: odoo-db
+      USER: odoo
+      PASSWORD: odoo
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ──────────────────────────────────────────────────────
+  #  Odoo's Postgres
+  #  Kept separate from your backend's Postgres so each tier owns
+  #  its own data store. Backend NEVER connects here directly —
+  #  it talks to Odoo via XML-RPC on port 8069.
+  # ──────────────────────────────────────────────────────
+  odoo-db:
+    image: postgres:16
+    container_name: optimaai-odoo-db
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  odoo-data:
+  odoo-db-data:
