@@ -59,6 +59,8 @@ docker restart odoo-web
 
 ## 📚 Documentation
 
+Full platform docs: [optima-ai-documentation.vercel.app](https://optima-ai-documentation.vercel.app)
+
 | Doc | Purpose |
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Complete technical reference — models, controllers, frontend, security |
